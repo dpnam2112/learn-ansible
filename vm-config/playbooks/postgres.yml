@@ -1,0 +1,16 @@
+- name: Setup PostgreSQL packages
+  hosts: postgres-db
+  become: true
+  tasks:
+    - name: Setup hostname
+      ansible.builtin.hostname:
+        name: "pg-{{ inventory_hostname }}"
+
+    - name: Install PostgreSQL common packages
+      ansible.builtin.apt:
+        name:
+          - postgresql
+          - postgresql-client-common
+          - postgresql-client
+        state: present
+        update_cache: yes

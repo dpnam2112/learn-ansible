@@ -1,0 +1,14 @@
+- name: Common setup for all hosts
+  hosts: all
+  become: true
+  tasks:
+    - name: Set timezone to Asia/Ho_Chi_Minh
+      ansible.builtin.timezone:
+        name: Asia/Ho_Chi_Minh
+
+    - name: Utilities
+      ansible.builtin.apt:
+        name:
+          - vim # for navigating/editing files
+        state: present
+        update_cache: yes

@@ -1,0 +1,17 @@
+[project]
+name = "myapp"
+version = "0.1.0"
+description = "Tiny FastAPI + Postgres demo"
+requires-python = ">=3.10"
+
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "psycopg2-binary",
+]
+
+[project.scripts]
+serve = "uvicorn:main" # not used directly; we’ll call uvicorn with module path
+
+[tool.uv]
+# uv will create a .venv in the project dir when we `uv sync`
