@@ -1,0 +1,9 @@
+- name: Configure SSH daemon
+  hosts: all
+  become: true
+  roles:
+    - role: sshd
+      vars:
+        ssh_port: 22
+        allow_tcp_forwarding: "yes"
+        permit_root_login: "no"

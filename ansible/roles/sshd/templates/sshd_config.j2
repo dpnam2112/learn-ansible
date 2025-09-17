@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+
+# Authentication
+PermitRootLogin {{ permit_root_login | default('no') }}
+PasswordAuthentication no
+PubkeyAuthentication yes
+ChallengeResponseAuthentication no
+
+# Forwarding
+AllowTcpForwarding {{ allow_tcp_forwarding | default('yes') }}
+X11Forwarding no
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Max sessions
+MaxAuthTries 3
+ClientAliveInterval 300
+ClientAliveCountMax 2
