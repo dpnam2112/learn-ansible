@@ -1,0 +1,7 @@
+- name: Setup hostname
+  include_tasks: hostname.yml
+  tags: ["hostname"]
+
+- name: Setup packages
+  include_tasks: packages.yml
+  tags: ["packages"]

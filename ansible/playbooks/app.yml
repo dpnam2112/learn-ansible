@@ -2,15 +2,8 @@
   hosts: app
   become: true
   tasks:
-    - name: Setup hostname
-      ansible.builtin.hostname:
-        name: "app-{{ inventory_hostname }}"
+    - name: Common setup
+      ansible.builtin.import_role:
+        name: common
 
     - import_tasks: tasks/install_docker.yml
-
-    - name: Install packages for deployment
-      ansible.builtin.apt:
-        name:
-          - git
-        state: present
-        update_cache: yes

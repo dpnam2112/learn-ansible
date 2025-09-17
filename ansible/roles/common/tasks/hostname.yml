@@ -1,0 +1,18 @@
+# roles/common/tasks/hostname.yml
+- name: Fail fast if required vars are missing
+  ansible.builtin.assert:
+    that:
+      - service is defined
+      - env is defined
+      - seq is defined
+
+- name: Compute desired fqdn
+  ansible.builtin.set_fact:
+    desired_short: "{{ service }}-{{ env }}-{{ '%02d' | format(seq|int) }}"
+    desired_domain: "{{ domain | default('corp.example.com') }}"
+    desired_fqdn: "{{ service }}-{{ env }}-{{ '%02d' | format(seq|int) }}.{{ domain | default('corp.example.com') }}"
+
+- name: Enforce hostname (short + fqdn)
+  ansible.builtin.hostname:
+    name: "{{ desired_fqdn }}"
+    use: systemd
