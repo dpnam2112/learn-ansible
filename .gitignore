@@ -1,0 +1,56 @@
+# =====================
+# Vagrant
+# =====================
+.vagrant/
+*/.vagrant/
+**/.vagrant/
+*.box              # Vagrant box files
+.vagrant.d/        # Vagrant config/cache directory
+
+# =====================
+# Ansible
+# =====================
+*.retry            # Retry files when a playbook fails
+*.vault_pass       # Vault password files (never commit secrets!)
+*.log              # Ansible logs
+*.out              # Any captured outputs
+
+# Roles & Collections (if generated locally, ignore them)
+roles/*/files/
+roles/*/vars/
+roles/*/defaults/
+collections/ansible_collections/*/*/.git/
+
+# Inventory (if you keep host inventory local & sensitive)
+inventory.ini
+inventory.yml
+hosts
+.hosts
+
+# SSH keys (don’t put private keys in Git!)
+*.pem
+*.key
+*.id_rsa
+*.id_rsa.pub
+
+# =====================
+# Python (common with Ansible)
+# =====================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.env
+
+# =====================
+# Misc
+# =====================
+*.swp
+*.swo
+*.bak
+.DS_Store
+
