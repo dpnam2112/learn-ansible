@@ -1,0 +1,7 @@
+users:
+  - name: "deploy"
+    groups: ["deploy"]
+    system: false
+    create_home: true
+    pubkeys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"

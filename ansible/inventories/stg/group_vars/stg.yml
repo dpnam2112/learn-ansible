@@ -1,5 +1,7 @@
 env: "stg"
+
 unix_groups:
   - "dev"
   - "ops"
   - "sec"
+  - "deploy"

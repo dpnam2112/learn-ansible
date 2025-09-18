@@ -1,3 +1,31 @@
 - name: Create UNIX groups
   include_tasks: create_grp.yml
-  tags: ["groups"]
+  tags: ["identity"]
+
+- name: Ensure users variable is defined
+  ansible.builtin.set_fact:
+    users: "{{ users | default([]) }}"
+
+- name: Manage users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default('present') }}"
+    shell: "{{ item.shell | default(omit) }}"
+    uid:   "{{ item.uid   | default(omit) }}"
+    groups: "{{ item.groups | default(omit) }}"
+    append: true
+    system: "{{ item.system | default(omit) }}"
+    create_home: "{{ item.create_home | default(true) }}"
+    password: "*"
+    password_lock: false  # prevent user locking. linux will lock created users whose password is not set by default
+  loop: "{{ users }}"
+  tags: ["identity"]
+
+- name: Install authorized_keys per user
+  ansible.posix.authorized_key:
+    user: "{{ item.0.name }}"
+    key: "{{ item.1 }}"
+    state: present
+    exclusive: "{{ item.0.exclusive_keys | default(true) }}" # if this is set to true, remove keys that are not managed by ansible
+    manage_dir: true
+  loop: "{{ users | list | subelements('pubkeys', skip_missing=True) }}"  # the final result is a list of (user, user's pubkey) pairs
