@@ -21,12 +21,6 @@ roles/*/vars/
 roles/*/defaults/
 collections/ansible_collections/*/*/.git/
 
-# Inventory (if you keep host inventory local & sensitive)
-inventory.ini
-inventory.yml
-hosts
-.hosts
-
 # SSH keys (don’t put private keys in Git!)
 *.pem
 *.key
