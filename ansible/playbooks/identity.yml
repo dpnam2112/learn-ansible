@@ -1,0 +1,6 @@
+- name: Identity setup
+  hosts: all
+  become: true
+
+  roles:
+    - role: identity

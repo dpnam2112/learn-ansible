@@ -1,1 +1,4 @@
 env: "prod"
+unix_groups:
+  - "ops"
+  - "sec"

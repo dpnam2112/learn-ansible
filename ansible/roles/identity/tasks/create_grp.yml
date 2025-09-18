@@ -1,0 +1,5 @@
+- name: Ensure groups exist
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: "present"
+  loop: "{{ unix_groups }}"
