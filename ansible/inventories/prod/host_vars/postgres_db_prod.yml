@@ -1,0 +1,16 @@
+users:
+  # system team lead
+- name: "namdp-zsys"
+  groups: ["ops"]
+  system: false
+  create_home: true
+  pubkeys:
+    - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"
+
+# Database admin
+- name: "namdp-dbadmin"
+  groups: ["dbadmin"]
+  system: false
+  create_home: true
+  pubkeys:
+    - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"

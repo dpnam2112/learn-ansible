@@ -1,5 +1,10 @@
 env: "prod"
+
+# common groups for production environment.
 unix_groups:
   - "ops"
   - "sec"
+  - "dev"
   - "deploy"
+  - "dbadmin"
+  - "docker"

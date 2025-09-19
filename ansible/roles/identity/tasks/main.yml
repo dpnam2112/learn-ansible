@@ -13,7 +13,6 @@
     shell: "{{ item.shell | default(omit) }}"
     uid:   "{{ item.uid   | default(omit) }}"
     groups: "{{ item.groups | default(omit) }}"
-    append: true
     system: "{{ item.system | default(omit) }}"
     create_home: "{{ item.create_home | default(true) }}"
     password: "*"

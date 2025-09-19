@@ -4,5 +4,5 @@
     dest: /etc/ssh/sshd_config
     owner: root
     group: root
-    mode: '0600'
+    mode: '0600' # read and write for owner (root)
   notify: Reload sshd
