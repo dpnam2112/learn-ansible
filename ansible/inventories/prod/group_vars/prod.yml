@@ -8,3 +8,6 @@ unix_groups:
   - "deploy"
   - "dbadmin"
   - "docker"
+
+# hostname template across hosts in production
+hostname: "{{ '%s-%s-%02d' | format(env, service, seq) }}"
