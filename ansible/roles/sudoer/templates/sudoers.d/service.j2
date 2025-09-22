@@ -1,0 +1,53 @@
+# Managed by Ansible
+# Sudoer template per service: /etc/sudoers.d/{{ service_name | default('service') }}
+
+{# Host alias #}
+{% set hostalias = ansible_hostname | default(inventory_hostname) %}
+Host_Alias HOSTNAME = {{ hostalias }}
+
+# Define command aliases for each action
+{% for cmd_name, cmd in sudoer_commands.items() %}
+Cmnd_Alias CMD_{{ cmd_name | upper }} = {{ cmd.cmds | join(', ') }}
+{% endfor %}
+
+# Apply action permission for every group
+# %[Role (unix group)] [Hostnames] = ([Run as]) [NOPASSWD:] [Actions]
+{% for role, policy in sudoer_policies.items() %}
+%{{ role }} HOSTNAME = ({{ policy.runas | default('root') }}){% if policy.nopasswd | default(true) %} NOPASSWD:{% endif %} {{ policy.commands
+  | map('upper')
+  | map('regex_replace', '^(.*)$', 'CMD_\\1')
+  | join(', ') }}
+{% endfor %}
+
+
+##################################################
+# Example (with the following vars):
+#
+# sudoer_commands:
+#   restart_postgres:
+#     cmds:
+#       - /bin/systemctl restart postgresql
+#   tail_postgres_log:
+#     cmds:
+#       - /usr/bin/tail -n 100 /var/log/postgresql/postgresql.log
+#
+# sudoer_policies:
+#   dbadmin:
+#     runas: root
+#     nopasswd: true
+#     actions:
+#       - restart_postgres
+#       - tail_postgres_log
+#
+# ansible_hostname = postgres-db-prod-1
+#
+# ---- Output after rendering ----
+#
+# Host_Alias HOSTNAME = postgres-db-prod-1
+#
+# Cmnd_Alias ACTION_RESTART_POSTGRES = /bin/systemctl restart postgresql
+# Cmnd_Alias ACTION_TAIL_POSTGRES_LOG = /usr/bin/tail -n 100 /var/log/postgresql/postgresql.log
+#
+# %dbadmin HOSTNAME = (root) NOPASSWD: ACTION_RESTART_POSTGRES, ACTION_TAIL_POSTGRES_LOG
+#
+##################################################

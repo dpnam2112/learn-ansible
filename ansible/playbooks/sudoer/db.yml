@@ -1,0 +1,41 @@
+- name: Configure sudoer policies for databases
+  hosts: postgres-db
+  become: true
+
+  vars:
+    # 1) Catalog of actual shell commands, namespaced
+    sudoer_commands:
+      restart_postgres:
+        cmds:
+          - "/usr/bin/systemctl restart postgresql"
+      tail_postgres_logs:
+        cmds:
+          - "/usr/bin/journalctl -u postgresql -f"
+
+      
+
+    # 2) Policies per UNIX group, referencing the command names above
+    sudoer_policies:
+      dbadmin:
+        commands: [ "restart_postgres", "tail_postgres_logs" ]
+        runas: root
+        nopasswd: true
+
+      ops:
+        commands: [ "restart_postgres", "tail_postgres_logs" ]
+        runas: root
+        nopasswd: true
+
+      dev:
+        commands: [ "tail_postgres_logs" ]
+        runas: root
+        nopasswd: true
+
+      sec:
+        commands: [ "tail_postgres_logs" ]
+        runas: root
+        nopasswd: true
+
+  roles:
+    - role: sudoer
+

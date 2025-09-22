@@ -11,3 +11,47 @@ unix_groups:
 
 # hostname template across hosts in production
 hostname: "{{ '%s-%s-%02d' | format(env, service, seq) }}"
+
+users:
+  - name: "deploy"
+    groups: ["deploy", "docker"]
+    system: false
+    create_home: true
+    # TODO: How to define expiration time?
+    pubkeys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"
+
+    # NOTE: name format: user's ID in the corporation/business + team name
+    # for simplicity, I use a common public key for these users.
+
+    # system team lead
+  - name: "namdp-zsys"
+    groups: ["ops"]
+    system: false
+    create_home: true
+    pubkeys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"
+
+    # Security team lead
+  - name: "namtp-zsec"
+    groups: ["sec"]
+    system: false
+    create_home: true
+    pubkeys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"
+
+    # Back-end team lead
+  - name: "namtp-be"
+    groups: ["dev"]
+    system: false
+    create_home: true
+    pubkeys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"
+
+    # Database admin
+  - name: "namdp-dbadmin"
+    groups: ["dbadmin"]
+    system: false
+    create_home: true
+    pubkeys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"

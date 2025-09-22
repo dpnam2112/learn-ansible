@@ -1,0 +1,8 @@
+- name: Generate sudoer file
+  ansible.builtin.template:
+    src: "sudoers.d/service.j2"
+    dest: "/etc/sudoers.d/{{ hostname }}"
+    owner: root
+    group: root
+    mode: '0600'
+    validate: '/usr/sbin/visudo -cf %s'
