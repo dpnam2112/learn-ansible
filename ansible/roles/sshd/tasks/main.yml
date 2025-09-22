@@ -1,3 +1,8 @@
+- name: Discover sshd binary
+  ansible.builtin.command: which sshd
+  register: sshd_bin
+  changed_when: false
+
 - name: Deploy sshd configuration
   ansible.builtin.template:
     src: sshd_config.j2
@@ -5,4 +10,5 @@
     owner: root
     group: root
     mode: '0600' # read and write for owner (root)
+    validate: "{{ sshd_bin.stdout | default('/usr/sbin/sshd') }} -t -f %s" # check if the config file syntax is valid before putting it in the destination
   notify: Reload sshd

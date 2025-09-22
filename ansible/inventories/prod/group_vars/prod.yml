@@ -1,5 +1,9 @@
 env: "prod"
 
+# hostname template across hosts in production
+hostname: "{{ '%s-%s-%02d' | format(env, service, seq) }}"
+
+# Unix identity configuration (users, groups)
 # common groups for production environment.
 unix_groups:
   - "ops"
@@ -8,9 +12,6 @@ unix_groups:
   - "deploy"
   - "dbadmin"
   - "docker"
-
-# hostname template across hosts in production
-hostname: "{{ '%s-%s-%02d' | format(env, service, seq) }}"
 
 users:
   - name: "deploy"
@@ -55,3 +56,9 @@ users:
     create_home: true
     pubkeys:
       - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINX09wjV0a8FRDuOVK5tjRb0eJVRyeG1+e05SU/uJkRa lap14089@LAP14089-NamDP"
+
+
+# SSH server configuration
+ssh_port: 22
+permit_root_login: "prohibit-password"
+allow_tcp_forwarding: "yes"
