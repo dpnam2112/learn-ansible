@@ -1,5 +1,5 @@
 - name: Configure sudoer policies for databases
-  hosts: postgres-db
+  hosts: postgres_db
   become: true
 
   vars:

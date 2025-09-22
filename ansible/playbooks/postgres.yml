@@ -1,5 +1,5 @@
 - name: Setup PostgreSQL packages
-  hosts: postgres-db
+  hosts: postgres_db
   become: true
 
   roles:
