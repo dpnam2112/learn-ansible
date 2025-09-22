@@ -1,11 +1,6 @@
-- name: Setup app deployment environment
-  hosts: app
+- name: Setup ZA virtual macine
+  hosts: za_vm
   become: true
-
-  vars:
-    fw_allow_icmp: true
-    fw_persist: true
-
   tasks:
     - name: Common setup
       ansible.builtin.import_role:
@@ -18,7 +13,3 @@
     - name: UNIX identity
       ansible.builtin.import_role:
         name: unix_identity
-
-    - name: Firewall configuration
-      ansible.builtin.import_role:
-        name: firewall

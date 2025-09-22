@@ -3,6 +3,12 @@ env: "prod"
 # hostname template across hosts in production
 hostname: "{{ '%s-%s-%02d' | format(env, service, seq) }}"
 
+common_packages:
+  - curl
+  - vim
+  - wget
+  - dnsutils
+
 # Unix identity configuration (users, groups)
 # common groups for production environment.
 unix_groups:

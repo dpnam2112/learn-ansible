@@ -1,0 +1,31 @@
+---
+# ========== Inbound defaults ==========
+fw_default_input_policy: DROP
+fw_allow_icmp: false
+
+# User-defined inbound rules (INPUT)
+# Example:
+# fw_extra_rules:
+#   - { proto: tcp, port: 80, comment: "HTTP inbound" }
+#   - { proto: tcp, port: 443, source: 10.0.0.0/8, comment: "HTTPS from LAN" }
+fw_extra_rules: []
+
+# ========== Outbound defaults ==========
+# Outbound traffic is allowed by default (sane for most apps)
+fw_default_output_policy: ACCEPT
+
+# User-defined outbound rules (OUTPUT)
+# Only used if you set fw_default_output_policy: DROP
+# Example:
+# fw_outbound_rules:
+#   - { proto: udp, port: 53, dest: 0.0.0.0/0, comment: "DNS" }
+#   - { proto: udp, port: 123, dest: 0.0.0.0/0, comment: "NTP" }
+#   - { proto: tcp, port: 443, dest: 0.0.0.0/0, comment: "HTTPS outbound" }
+fw_outbound_rules: []
+
+# ========== Persistence ==========
+# Whether to save rules across reboot
+fw_persist: false
+fw_persist_rhel: /etc/sysconfig/iptables
+fw_persist_debian_v4: /etc/iptables/rules.v4
+

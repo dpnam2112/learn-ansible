@@ -2,13 +2,6 @@
   hosts: all
   become: true
 
-  vars:
-    common_packages:
-      - curl
-      - vim
-      - wget
-      - dnsutils
-
   tasks:
     - name: Common setup
       ansible.builtin.import_role:
