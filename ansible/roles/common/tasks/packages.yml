@@ -1,9 +1,19 @@
-- name: Install common packages
-  apt:
-    name:
-      - curl
-      - vim
-      - htop
-      - unzip
+# tasks/packages.yml
+- name: Resolve package list for this OS
+  vars:
+  set_fact:
+    pkgs_to_install: >-
+      {{ common_packages
+         + (pkg_map.get(ansible_distribution, [])
+            or pkg_map.get(ansible_os_family, [])
+            or pkg_map.default) }}
+
+- name: Install packages (OS-agnostic)
+  become: true
+  ansible.builtin.package:
+    name: "{{ pkgs_to_install }}"
     state: present
-    update_cache: yes
+  environment:
+    http_proxy:  "{{ http_proxy | default('') }}"
+    https_proxy: "{{ https_proxy | default('') }}"
+    no_proxy:    "{{ no_proxy   | default('') }}"

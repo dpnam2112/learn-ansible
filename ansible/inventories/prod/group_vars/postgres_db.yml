@@ -1,1 +1,1 @@
-service: postgres_db
+service: "postgres-db"

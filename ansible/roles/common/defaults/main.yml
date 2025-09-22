@@ -1,0 +1,13 @@
+# map package names that differ per distro/family
+pkg_map:
+  default:
+    - python3
+    - python3-pip
+
+  # By distribution (overrides family if present)
+  Ubuntu:
+    - python3
+    - python3-pip
+  Rocky:
+    - python3
+    - python3-dnf
