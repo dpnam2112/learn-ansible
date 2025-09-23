@@ -1,152 +1,35 @@
----
-- name: Ensure iptables packages
+- name: Ensure nftables present
   package:
-    name: >-
-      {{ (ansible_facts.os_family == 'RedHat')
-          | ternary(['iptables', 'iptables-services'],
-                    ['iptables', 'iptables-persistent']) }}
+    name: nftables
     state: present
 
-# ---------- INBOUND (INPUT) ----------
-- name: Allow SSH (inbound)
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: 22
-    jump: ACCEPT
-    state: present
-    comment: "Allow SSH"
+- name: Disable legacy iptables-services if installed
+  service:
+    name: iptables
+    state: stopped
+    enabled: false
+  ignore_errors: true
 
-- name: Allow loopback (inbound)
-  ansible.builtin.iptables:
-    chain: INPUT
-    in_interface: lo
-    jump: ACCEPT
-    state: present
-    comment: "Allow loopback (in)"
+- name: Ensure nftables service enabled
+  service:
+    name: nftables
+    state: started
+    enabled: true
 
-- name: Allow established/related (inbound)
-  ansible.builtin.iptables:
-    chain: INPUT
-    ctstate: ESTABLISHED,RELATED
-    jump: ACCEPT
-    state: present
-    comment: "Allow established/related (in)"
+- name: Render nftables config
+  template:
+    src: nftables.conf.j2
+    dest: "{{ fw_nft_conf_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+    validate: "nft -c -f %s"
+  register: nft_conf
 
-- name: Allow ICMP (inbound)
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: icmp
-    jump: ACCEPT
-    state: present
-    comment: "Allow ping (in)"
-  when: fw_allow_icmp
-
-- name: Apply user-defined inbound rules
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: "{{ item.proto }}"
-    destination_port: "{{ item.port | default(omit) }}"
-    source: "{{ item.source | default(omit) }}"
-    jump: ACCEPT
-    state: present
-    comment: "{{ item.comment | default('custom inbound rule') }}"
-  loop: "{{ fw_extra_rules }}"
-
-- name: Set default INPUT policy
-  ansible.builtin.iptables:
-    chain: INPUT
-    policy: "{{ fw_default_input_policy }}"
-
-# ---------- OUTBOUND (OUTPUT) ----------
-# Order matters: allow loopback + established/related first,
-# then specific NEW traffic (when default will be DROP)
-
-- name: Allow loopback (outbound)
-  ansible.builtin.iptables:
-    chain: OUTPUT
-    out_interface: lo
-    jump: ACCEPT
-    state: present
-    comment: "Allow loopback (out)"
-
-- name: Allow established/related (outbound)
-  ansible.builtin.iptables:
-    chain: OUTPUT
-    ctstate: ESTABLISHED,RELATED
-    jump: ACCEPT
-    state: present
-    comment: "Allow established/related (out)"
-
-# Apply egress allows
-- name: Apply user-defined outbound rules
-  ansible.builtin.iptables:
-    chain: OUTPUT
-    protocol: "{{ item.proto }}"
-    destination_port: "{{ item.port | default(omit) }}"
-    destination: "{{ item.dest | default(omit) }}"
-    jump: ACCEPT
-    state: present
-    comment: "{{ item.comment | default('custom outbound rule') }}"
-  loop: "{{ fw_outbound_rules }}"
-
-- name: Set default OUTPUT policy
-  ansible.builtin.iptables:
-    chain: OUTPUT
-    policy: "{{ fw_default_output_policy }}"
-
-# ---------- PERSISTENCE (optional) ----------
-- name: Persist iptables (RHEL)
-  when:
-    - fw_persist
-    - ansible_facts.os_family == "RedHat"
-  block:
-    - name: Save current rules
-      command: iptables-save
-      register: ipt_save
-      changed_when: false
-
-    - name: Write /etc/sysconfig/iptables
-      copy:
-        dest: "{{ fw_persist_rhel }}"
-        content: "{{ ipt_save.stdout }}\n"
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: Enable iptables service
-      service:
-        name: iptables
-        enabled: true
-        state: started
-
-- name: Persist iptables (Debian)
-  when:
-    - fw_persist
-    - ansible_facts.os_family == "Debian"
-  block:
-    - name: Ensure directory
-      file:
-        path: "/etc/iptables"
-        state: directory
-        mode: '0755'
-
-    - name: Save current rules
-      command: iptables-save
-      register: ipt_save
-      changed_when: false
-
-    - name: Write rules.v4
-      copy:
-        dest: "{{ fw_persist_debian_v4 }}"
-        content: "{{ ipt_save.stdout }}\n"
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: Enable netfilter-persistent
-      service:
-        name: netfilter-persistent
-        enabled: true
-        state: started
+- name: Reload nftables service
+  systemd:
+    name: nftables
+    state: reloaded
+  when: nft_conf.changed
 

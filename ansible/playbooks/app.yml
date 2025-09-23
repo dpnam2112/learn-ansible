@@ -5,6 +5,8 @@
   vars:
     fw_allow_icmp: true
     fw_persist: true
+    fw_inbound_rules:
+    - { proto: tcp, port: 8000, action: accept, comment: "HTTP" }
 
   tasks:
     - name: Common setup

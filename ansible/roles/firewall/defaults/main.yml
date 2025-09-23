@@ -1,31 +1,16 @@
----
-# ========== Inbound defaults ==========
-fw_default_input_policy: DROP
-fw_allow_icmp: false
+# ========== Policies & toggles ==========
+fw_default_input_policy:  DROP        # drop unsolicited inbound
+fw_default_output_policy: ACCEPT      # default allow egress (you can set DROP)
+fw_allow_icmp:            true        # allow ICMPv4+v6 for PMTU/health
 
-# User-defined inbound rules (INPUT)
-# Example:
-# fw_extra_rules:
-#   - { proto: tcp, port: 80, comment: "HTTP inbound" }
-#   - { proto: tcp, port: 443, source: 10.0.0.0/8, comment: "HTTPS from LAN" }
-fw_extra_rules: []
+# ========== Inbound rules ==========
+# Schema: { proto: tcp|udp|icmp|icmpv6, port: <int>, src: <cidr>, action: accept|reject|drop, comment: <str> }
+fw_inbound_rules: []
 
-# ========== Outbound defaults ==========
-# Outbound traffic is allowed by default (sane for most apps)
-fw_default_output_policy: ACCEPT
-
-# User-defined outbound rules (OUTPUT)
-# Only used if you set fw_default_output_policy: DROP
-# Example:
-# fw_outbound_rules:
-#   - { proto: udp, port: 53, dest: 0.0.0.0/0, comment: "DNS" }
-#   - { proto: udp, port: 123, dest: 0.0.0.0/0, comment: "NTP" }
-#   - { proto: tcp, port: 443, dest: 0.0.0.0/0, comment: "HTTPS outbound" }
+# ========== Outbound rules ==========
+# Schema: { proto: tcp|udp, port: <int>, dest: <cidr>, action: accept|reject|drop, comment: <str> }
 fw_outbound_rules: []
 
 # ========== Persistence ==========
-# Whether to save rules across reboot
-fw_persist: false
-fw_persist_rhel: /etc/sysconfig/iptables
-fw_persist_debian_v4: /etc/iptables/rules.v4
-
+# nftables persists via /etc/nftables.conf + service
+fw_nft_conf_path: /etc/nftables.conf
