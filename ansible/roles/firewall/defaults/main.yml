@@ -1,3 +1,7 @@
+# Firewall configuration for SSH
+
+
+
 # ========== Policies & toggles ==========
 fw_default_input_policy:  DROP        # drop unsolicited inbound
 fw_default_output_policy: ACCEPT      # default allow egress (you can set DROP)

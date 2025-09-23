@@ -5,8 +5,11 @@
   vars:
     fw_allow_icmp: true
     fw_persist: true
+    fw_default_input_policy: DROP # Drop all incoming packets by default
     fw_inbound_rules:
-    - { proto: tcp, port: 8000, action: accept, comment: "HTTP" }
+      - { proto: "tcp", port: 22, action: "accept", src: "192.168.56.0/24", comment: "Allow SSH connection for hosts in the LAN" }
+      - { proto: "tcp", port: 22, action: "accept", src: "192.168.121.0/24", comment: "Allow SSH connection for hosts in the LAN" }
+      - { proto: "tcp", port: 8000, action: "accept", src: "192.168.121.0/24", comment: "Allow connection to the application" }
 
   tasks:
     - name: Common setup

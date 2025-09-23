@@ -5,7 +5,7 @@
 {% macro action_token(a) -%}
 {%- set aa = (a|default('accept'))|lower -%}
 {%- if aa == 'reject' -%}
-reject with icmpx port-unreachable
+reject
 {%- else -%}
 {{ aa }}
 {%- endif -%}
@@ -14,12 +14,6 @@ reject with icmpx port-unreachable
 flush ruleset
 
 table inet filter {
-  # Define sets directly (older nftables doesn't support a 'sets { }' block)
-  set ssh_ports {
-    type inet_service;
-    elements = { 22 };
-  }
-
   chain input {
     type filter hook input priority 0; policy {{ fw_default_input_policy | lower }};
 
@@ -34,9 +28,6 @@ table inet filter {
     ip protocol icmp accept
     ip6 nexthdr icmpv6 accept
     {% endif %}
-
-    # Always allow SSH (baseline)
-    tcp dport @ssh_ports accept
 
     # ---- Dynamic inbound rules ----
     {% set _in_rules = (fw_inbound_rules | default([])) %}
