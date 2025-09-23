@@ -5,6 +5,7 @@ Vagrant.configure("2") do |config|
     "db"  => "192.168.56.11",
     "app" => "192.168.56.12",
     "db2" => "192.168.56.13",
+    "app2" => "192.168.56.14",
   }.each do |name, ip|
     config.vm.define name do |node|
       node.vm.box = BOX
