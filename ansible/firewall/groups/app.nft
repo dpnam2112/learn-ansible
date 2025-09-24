@@ -1,0 +1,18 @@
+table inet filter {
+    chain input {
+        type filter hook input priority 0;
+        policy drop;
+
+        # Allow loopback traffic
+        iifname "lo" accept
+        ip saddr 127.0.0.0/8 ct state established,related accept
+
+        # SSH from trusted subnets — extra safety (optional if above covers SSH already)
+        tcp dport 22 ip saddr $trusted_subnets ct state new,established accept
+
+        # Allow responses to outgoing connections
+        ct state established,related accept
+
+        tcp dport 8000 ip saddr $trusted_subnets accept
+    }
+}

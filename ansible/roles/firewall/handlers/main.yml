@@ -1,0 +1,12 @@
+- name: reload nftables
+  block:
+    - name: Validate whole ruleset (dry-run)
+      command: nft -c -f /etc/nftables.conf
+
+    - name: Apply rules atomically
+      command: nft -f /etc/nftables.conf
+
+    - name: Enable nftables service
+      service:
+        name: "{{ firewall_nft_service_name }}"
+        state: reloaded

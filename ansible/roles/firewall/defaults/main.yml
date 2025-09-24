@@ -1,20 +1,17 @@
-# Firewall configuration for SSH
+# Where your repo keeps the snippets (relative to playbook_dir or absolute)
+firewall_nft_snippet_src_root: "{{ playbook_dir }}/firewall"
 
+# Where to place them on the host
+firewall_nft_snippet_dst_root: /etc/nftables.d
 
+# Whether to install a tiny baseline table early (safe defaults)
+firewall_nft_enable_baseline: true
 
-# ========== Policies & toggles ==========
-fw_default_input_policy:  DROP        # drop unsolicited inbound
-fw_default_output_policy: ACCEPT      # default allow egress (you can set DROP)
-fw_allow_icmp:            true        # allow ICMPv4+v6 for PMTU/health
+firewall_nft_include_globs:
+  - "{{ firewall_nft_snippet_dst_root }}/global/*.nft"
+  - "{{ firewall_nft_snippet_dst_root }}/groups/*/*.nft"
+  - "{{ firewall_nft_snippet_dst_root }}/hosts/*/*.nft"
 
-# ========== Inbound rules ==========
-# Schema: { proto: tcp|udp|icmp|icmpv6, port: <int>, src: <cidr>, action: accept|reject|drop, comment: <str> }
-fw_inbound_rules: []
+# System service name (varies slightly by distro)
+firewall_nft_service_name: nftables
 
-# ========== Outbound rules ==========
-# Schema: { proto: tcp|udp, port: <int>, dest: <cidr>, action: accept|reject|drop, comment: <str> }
-fw_outbound_rules: []
-
-# ========== Persistence ==========
-# nftables persists via /etc/nftables.conf + service
-fw_nft_conf_path: /etc/nftables.conf

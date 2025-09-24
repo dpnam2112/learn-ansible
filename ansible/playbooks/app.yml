@@ -3,13 +3,11 @@
   become: true
 
   vars:
-    fw_allow_icmp: true
-    fw_persist: true
-    fw_default_input_policy: DROP # Drop all incoming packets by default
-    fw_inbound_rules:
-      - { proto: "tcp", port: 22, action: "accept", src: "192.168.56.0/24", comment: "Allow SSH connection for hosts in the LAN" }
-      - { proto: "tcp", port: 22, action: "accept", src: "192.168.121.0/24", comment: "Allow SSH connection for hosts in the LAN" }
-      - { proto: "tcp", port: 8000, action: "accept", src: "192.168.121.0/24", comment: "Allow connection to the application" }
+    firewall_nft_snippet_src_root: "{{ playbook_dir }}/../firewall"
+    firewall_nft_enable_baseline: false
+    firewall_nft_include_globs:
+      - "{{ firewall_nft_snippet_dst_root }}/global/*.nft"
+      - "{{ firewall_nft_snippet_dst_root }}/groups/app.nft"
 
   tasks:
     - name: Common setup
