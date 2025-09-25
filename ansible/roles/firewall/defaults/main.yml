@@ -1,17 +1,9 @@
-# Where your repo keeps the snippets (relative to playbook_dir or absolute)
-firewall_nft_snippet_src_root: "{{ playbook_dir }}/firewall"
-
-# Where to place them on the host
-firewall_nft_snippet_dst_root: /etc/nftables.d
-
-# Whether to install a tiny baseline table early (safe defaults)
-firewall_nft_enable_baseline: true
-
-firewall_nft_include_globs:
-  - "{{ firewall_nft_snippet_dst_root }}/global/*.nft"
-  - "{{ firewall_nft_snippet_dst_root }}/groups/*/*.nft"
-  - "{{ firewall_nft_snippet_dst_root }}/hosts/*/*.nft"
-
-# System service name (varies slightly by distro)
 firewall_nft_service_name: nftables
+firewall_enable_baseline: true
+
+firewall_include_globs:
+  - /etc/nftables.d/global/*.nft
+  - /etc/nftables.d/groups/*.nft
+  - /etc/nftables.d/hosts/*.nft
+  - /etc/nftables.d/custom/*.nft  
 

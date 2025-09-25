@@ -3,7 +3,7 @@
 
 flush ruleset
 
-{% if firewall_nft_enable_baseline %}
+{% if firewall_enable_baseline %}
 table inet baseline {
   chain input {
     type filter hook input priority -100; policy accept;
@@ -21,8 +21,8 @@ table inet baseline {
 }
 {% endif %}
 
-# Managed includes (lexicographic order):
-{% for g in firewall_nft_include_globs %}
+# Managed includes
+{% for g in firewall_include_globs %}
 include "{{ g }}";
 {% endfor %}
 

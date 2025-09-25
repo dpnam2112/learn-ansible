@@ -1,0 +1,21 @@
+- name: Setup app deployment environment
+  hosts: app
+  become: true
+
+  vars:
+    # nftables firewall configuration
+    # Read ./roles/firewall for more details.
+    additional_packages: ["supervsior"]
+
+  tasks:
+    - name: Merge base + additional packages (dedup)
+      ansible.builtin.set_fact:
+        common_packages: "{{ (common_packages | default([])) | union(additional_packages | default([])) }}"
+
+      # TODO: 
+    - name: Configure firewall
+
+    - name: Install victoria
+      ansible.builtin.import_tasks: "{{ playbook_dir }}/tasks"
+
+    - name:

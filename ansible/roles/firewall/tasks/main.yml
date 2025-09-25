@@ -1,10 +1,5 @@
-# roles/firewall/tasks/main.yml
-- name: Ensure nftables installed
-  package:
-    name: nftables
-    state: present
-
-- name: Ensure destination directories exist
+- name: Ensure dirs exist
+  become: true
   file:
     path: "{{ item }}"
     state: directory
@@ -12,100 +7,23 @@
     group: root
     mode: "0755"
   loop:
-    - "{{ firewall_nft_snippet_dst_root }}"
-    - "{{ firewall_nft_snippet_dst_root }}/global"
-    - "{{ firewall_nft_snippet_dst_root }}/groups"
-    - "{{ firewall_nft_snippet_dst_root }}/hosts"
-
-- block:
-    - name: Find global snippets
-      ansible.builtin.find:
-        paths: "{{ firewall_nft_snippet_src_root }}/global"
-        patterns: "*.nft"
-        file_type: file
-      register: _global
-      failed_when: false
-
-    - name: Find group snippets
-      ansible.builtin.find:
-        paths: "{{ firewall_nft_snippet_src_root }}/groups"
-        patterns: "*.nft"
-        file_type: file
-        recurse: true
-      register: _groups
-      failed_when: false
-
-    - name: Find host snippets
-      ansible.builtin.find:
-        paths: "{{ firewall_nft_snippet_src_root }}/hosts"
-        patterns: "*.nft"
-        file_type: file
-        recurse: true
-      register: _hosts
-      failed_when: false
-  delegate_to: localhost
-  run_once: true
-  become: false
-
-- name: Sync global snippets
-  copy:
-    src: "{{ item.path }}"
-    dest: "{{ firewall_nft_snippet_dst_root }}/global/{{ item.path | basename }}"
-    owner: root
-    group: root
-    mode: "0644"
-  loop: "{{ _global.files | default([]) }}"
-
-- name: Ensure group subdirs exist
-  file:
-    path: "{{ firewall_nft_snippet_dst_root }}/groups/{{ item.path | dirname | regex_replace('.*/groups/?', '') }}" # dirname will remove the trailing slash
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-  loop: "{{ _groups.files | default([]) }}"
-  loop_control: { label: "{{ item.path }}" }
-
-
-- name: Sync group snippets
-  copy:
-    src: "{{ item.path }}"
-    dest: "{{ firewall_nft_snippet_dst_root }}/groups/{{ item.path | regex_replace('.*/groups/', '') }}"
-    owner: root
-    group: root
-    mode: "0644"
-  loop: "{{ _groups.files | default([]) }}"
-
-- name: Ensure host subdirs exist
-  file:
-    path: "{{ firewall_nft_snippet_dst_root }}/hosts/{{ item.path | dirname | regex_replace('.*/hosts/?', '') }}" # dirname will remove the trailing slash
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-  loop: "{{ _hosts.files | default([]) }}"
-  loop_control: { label: "{{ item.path }}" }
-
-- name: Sync host snippets
-  copy:
-    src: "{{ item.path }}"
-    dest: "{{ firewall_nft_snippet_dst_root }}/hosts/{{ item.path | regex_replace('.*/hosts/', '') }}"
-    owner: root
-    group: root
-    mode: "0644"
-  loop: "{{ _hosts.files | default([]) }}"
+    - /etc/nftables.d/global
+    - /etc/nftables.d/groups
+    - /etc/nftables.d/hosts
+    - /etc/nftables.d/custom
 
 - name: Render /etc/nftables.conf
+  become: true
   template:
     src: nftables.conf.j2
     dest: /etc/nftables.conf
-    owner: root
-    group: root
     mode: "0644"
-    # validate before writing
     validate: "nft -c -f %s"
+  notify: reload nftables
 
-- name: Enable nftables service
+- name: Ensure nftables enabled & running
+  become: true
   service:
     name: "{{ firewall_nft_service_name }}"
-    state: reloaded
+    enabled: true
+    state: started

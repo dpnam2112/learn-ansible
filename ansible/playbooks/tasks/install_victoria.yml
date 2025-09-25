@@ -1,0 +1,36 @@
+- name: Ensure VictoriaMetrics data dir exists
+  file:
+    path: /var/lib/victoria-metrics-data
+    state: directory
+    owner: victoria
+    group: victoria
+    mode: '0755'
+
+- name: Create victoria user
+  user:
+    name: victoria
+    shell: /usr/sbin/nologin
+    system: yes
+    create_home: no
+
+- name: Download VictoriaMetrics archive
+  get_url:
+    url: "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/latest/download/victoria-metrics-amd64-v1.106.0.tar.gz"
+    dest: /tmp/victoria-metrics.tar.gz
+    mode: '0644'
+
+- name: Extract VictoriaMetrics binary
+  unarchive:
+    src: /tmp/victoria-metrics.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+    extra_opts: [--strip-components=0]
+  notify: restart victoria
+
+- name: Ensure victoria binary is executable
+  file:
+    path: /usr/local/bin/victoria-metrics
+    mode: '0755'
+    owner: victoria
+    group: victoria
+    state: file

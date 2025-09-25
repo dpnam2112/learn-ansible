@@ -3,13 +3,8 @@
   become: true
 
   vars:
-    # nftables firewall configuration
-    # Read ./roles/firewall for more details.
-    firewall_nft_snippet_src_root: "{{ playbook_dir }}/../firewall"
-    firewall_nft_enable_baseline: false
-    firewall_nft_include_globs:
-      - "{{ firewall_nft_snippet_dst_root }}/global/*.nft"
-      - "{{ firewall_nft_snippet_dst_root }}/groups/app.nft"
+    # Use the role's actual var name
+    firewall_enable_baseline: false
 
   tasks:
     - name: Merge base + additional packages (dedup)
@@ -30,56 +25,89 @@
       ansible.builtin.import_role:
         name: unix_identity
 
-    - name: Firewall configuration
-      ansible.builtin.import_role:
-        name: firewall
+    # --- Minimal firewall scaffold: creates dirs, renders main config, enables service ---
+    - name: nftables configuration
+      block:
+        - name: Firewall scaffold
+          ansible.builtin.import_role:
+            name: firewall
 
+        - name: Render global nft snippets
+          template:
+            src: "{{ item.src }}"
+            dest: "/etc/nftables.d/global/{{ item.dest }}"
+            owner: root
+            group: root
+            mode: "0644"
+          loop:
+            - { src: "{{ playbook_dir }}/../firewall/global/ip_def.nft.j2",  dest: "ip_def.nft" }
+            - { src: "{{ playbook_dir }}/../firewall/global/subnets.nft.j2", dest: "subnets.nft" }
+
+        - name: Render group snippet (app)
+          template:
+            src: "{{ playbook_dir }}/../firewall/groups/app.nft.j2"
+            dest: "/etc/nftables.d/groups/{{ service }}.nft"
+            owner: root
+            group: root
+            mode: "0644"
+      notify:
+        - reload nftables
+
+    # --- Keepalived config (unchanged, but kept here for completeness) ---
     - name: Keepalived configuration
       block:
-      - name: Ensure etc/keepalived exists
-        ansible.builtin.file:
-          path: "/etc/keepalived"
-          state: directory
-          mode: '0660'
-          owner: root
-          group: root
+        - name: Ensure /etc/keepalived exists
+          ansible.builtin.file:
+            path: "/etc/keepalived"
+            state: directory
+            mode: "0660"
+            owner: root
+            group: root
 
-      - name: Ensure etc/keepalived/keepalived.d exists
-        ansible.builtin.file:
-          path: "/etc/keepalived/keepalived.d"
-          state: directory
-          mode: '0660'
-          owner: root
-          group: root
+        - name: Ensure /etc/keepalived/keepalived.d exists
+          ansible.builtin.file:
+            path: "/etc/keepalived/keepalived.d"
+            state: directory
+            mode: "0660"
+            owner: root
+            group: root
 
-      - name: Render keepalived config per-host
-        ansible.builtin.template:
-          src: "{{ playbook_dir }}/../config_templates/keepalived/app.conf.j2"
-          dest: "/etc/keepalived/keepalived.d/{{ inventory_hostname }}.conf"
-          owner: root
-          group: root
-          mode: '0660'
+        - name: Render keepalived config per-host
+          ansible.builtin.template:
+            src: "{{ playbook_dir }}/../config_templates/keepalived/app.conf.j2"
+            dest: "/etc/keepalived/keepalived.d/{{ inventory_hostname }}.conf"
+            owner: root
+            group: root
+            mode: "0660"
 
-      - name: Ensure keepalived.d directory exists
-        ansible.builtin.file:
-          path: /etc/keepalived.d
-          state: directory
-          mode: '0660'
+        - name: Ensure keepalived.d directory exists
+          ansible.builtin.file:
+            path: /etc/keepalived.d
+            state: directory
+            mode: "0660"
 
-      - name: Render keepalived main config
-        ansible.builtin.template:
-          src: "{{ playbook_dir }}/../config_templates/keepalived/keepalived.conf.j2"
-          dest: "/etc/keepalived/keepalived.conf"
-          owner: root
-          group: root
-          mode: '0660'
-          validate: "keepalived -t -f %s"
-        notify: reload keepalived
+        - name: Render keepalived main config
+          ansible.builtin.template:
+            src: "{{ playbook_dir }}/../config_templates/keepalived/keepalived.conf.j2"
+            dest: "/etc/keepalived/keepalived.conf"
+            owner: root
+            group: root
+            mode: "0660"
+            validate: "keepalived -t -f %s"
+          notify: reload keepalived
 
   handlers:
-    - name: reload keepalived
-      listen: reload keepalived
-      ansible.builtin.systemd:
-        name: keepalived
-        state: reloaded
-        daemon_reload: false
+  - name: reload keepalived
+    listen: reload keepalived
+    ansible.builtin.systemd:
+      name: keepalived
+      state: reloaded
+      daemon_reload: false
+
+  - name: validate nftables
+    listen: reload nftables
+    command: nft -c -f /etc/nftables.conf
+
+  - name: apply nftables
+    listen: reload nftables
+    command: nft -f /etc/nftables.conf
