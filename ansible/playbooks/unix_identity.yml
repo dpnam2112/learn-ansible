@@ -1,6 +1,0 @@
-- name: Identity setup
-  hosts: all
-  become: true
-
-  roles:
-    - role: unix_identity

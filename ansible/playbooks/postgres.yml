@@ -1,6 +1,0 @@
-- name: Setup PostgreSQL packages
-  hosts: postgres_db
-  become: true
-
-  roles:
-    - role: common
