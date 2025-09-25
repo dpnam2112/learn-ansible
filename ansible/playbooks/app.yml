@@ -40,12 +40,12 @@
             group: root
             mode: "0644"
           loop:
-            - { src: "{{ playbook_dir }}/../firewall/global/ip_def.nft.j2",  dest: "ip_def.nft" }
-            - { src: "{{ playbook_dir }}/../firewall/global/subnets.nft.j2", dest: "subnets.nft" }
+            - { src: "{{ playbook_dir }}/../config_templates/firewall/global/ip_def.nft.j2",  dest: "ip_def.nft" }
+            - { src: "{{ playbook_dir }}/../config_templates/firewall/global/subnets.nft.j2", dest: "subnets.nft" }
 
         - name: Render group snippet (app)
           template:
-            src: "{{ playbook_dir }}/../firewall/groups/app.nft.j2"
+            src: "{{ playbook_dir }}/../config_templates/firewall/groups/app.nft.j2"
             dest: "/etc/nftables.d/groups/{{ service }}.nft"
             owner: root
             group: root
