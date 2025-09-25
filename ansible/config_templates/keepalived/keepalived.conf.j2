@@ -1,0 +1,25 @@
+# /etc/keepalived/keepalived.conf
+# Minimal, declarative, and boring-on-purpose (the good kind).
+
+global_defs {
+  # SNMP-style traps to syslog; useful for alerts
+  enable_traps
+
+  # Optional: route logs to a facility you collect
+  # log_facility LOCAL2
+
+  # Optional: identity (shows up in logs)
+  router_id {{ inventory_hostname | default('keepalived') }}
+}
+
+# Optional but handy: local stats/control socket for troubleshooting
+# (disable if you don't want a socket on disk)
+# keepalived_socket "/run/keepalived.sock"
+
+# Optional: script security (stop running world-writable scripts)
+# script_user root
+# enable_script_security
+
+# Keep the meat in a folder; each file = one group/instance/etc.
+include /etc/keepalived/keepalived.d/*.conf
+

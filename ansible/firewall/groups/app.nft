@@ -14,5 +14,12 @@ table inet filter {
         ct state established,related accept
 
         tcp dport 8000 ip saddr $trusted_subnets accept
+
+	# VRRP — allow keepalived chatter
+	ip protocol $vrrp ip saddr $trusted_subnets accept
+
+	# ICMP so ping/traceroute/etc. work
+	ip protocol icmp accept
+	ip6 nexthdr ipv6-icmp accept
     }
 }

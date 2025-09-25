@@ -3,6 +3,8 @@
   become: true
 
   vars:
+    # nftables firewall configuration
+    # Read ./roles/firewall for more details.
     firewall_nft_snippet_src_root: "{{ playbook_dir }}/../firewall"
     firewall_nft_enable_baseline: false
     firewall_nft_include_globs:
@@ -10,9 +12,15 @@
       - "{{ firewall_nft_snippet_dst_root }}/groups/app.nft"
 
   tasks:
+    - name: Merge base + additional packages (dedup)
+      ansible.builtin.set_fact:
+        common_packages: "{{ (common_packages | default([])) | union(additional_packages | default([])) }}"
+
     - name: Common setup
       ansible.builtin.import_role:
         name: common
+      vars:
+        common_packages: "{{ base_common_packages + (additional_packages | default([])) }}"
 
     - name: SSH configuration
       ansible.builtin.import_role:
@@ -25,3 +33,53 @@
     - name: Firewall configuration
       ansible.builtin.import_role:
         name: firewall
+
+    - name: Keepalived configuration
+      block:
+      - name: Ensure etc/keepalived exists
+        ansible.builtin.file:
+          path: "/etc/keepalived"
+          state: directory
+          mode: '0660'
+          owner: root
+          group: root
+
+      - name: Ensure etc/keepalived/keepalived.d exists
+        ansible.builtin.file:
+          path: "/etc/keepalived/keepalived.d"
+          state: directory
+          mode: '0660'
+          owner: root
+          group: root
+
+      - name: Render keepalived config per-host
+        ansible.builtin.template:
+          src: "{{ playbook_dir }}/../config_templates/keepalived/app.conf.j2"
+          dest: "/etc/keepalived/keepalived.d/{{ inventory_hostname }}.conf"
+          owner: root
+          group: root
+          mode: '0660'
+
+      - name: Ensure keepalived.d directory exists
+        ansible.builtin.file:
+          path: /etc/keepalived.d
+          state: directory
+          mode: '0660'
+
+      - name: Render keepalived main config
+        ansible.builtin.template:
+          src: "{{ playbook_dir }}/../config_templates/keepalived/keepalived.conf.j2"
+          dest: "/etc/keepalived/keepalived.conf"
+          owner: root
+          group: root
+          mode: '0660'
+          validate: "keepalived -t -f %s"
+        notify: reload keepalived
+
+  handlers:
+    - name: reload keepalived
+      listen: reload keepalived
+      ansible.builtin.systemd:
+        name: keepalived
+        state: reloaded
+        daemon_reload: false

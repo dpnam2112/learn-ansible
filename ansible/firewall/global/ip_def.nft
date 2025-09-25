@@ -1,0 +1,2 @@
+# IP protocols definition
+define vrrp = 112
