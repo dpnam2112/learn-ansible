@@ -1,24 +1,18 @@
-# Grafana (3000) + VictoriaMetrics (8428) — restrict to trusted subnets
-# Requires global definitions: trusted_subnets
-
 table inet filter {
   chain input {
     type filter hook input priority 0;
     policy drop;
 
-    # Allow traffic to loopback addresses
     iifname "lo" accept
-
-    # Let replies in
     ct state established,related accept
 
     tcp dport 22 ip saddr $trusted_subnets ct state new,established accept
 
-    # Allow HTTP from trusted subnets to Grafana & Victoria
-    tcp dport {{ grafana_http_port }} ip saddr $trusted_subnets accept
-    tcp dport {{ victoria_http_port }} ip saddr $trusted_subnets accept
+    # Only nginx front door
+    tcp dport 80 ip saddr $trusted_subnets accept
+    # add later:
+    # tcp dport 443 ip saddr $trusted_subnets accept
 
-    # Optional: ICMP for diagnostics
     ip protocol icmp accept
     ip6 nexthdr ipv6-icmp accept
   }
@@ -27,17 +21,10 @@ table inet filter {
     type filter hook output priority 0;
     policy drop;
 
-    # Replies out
     ct state established,related accept
-
-    # Loopback out (needed for systemd-resolved to 127.0.0.53)
     oifname "lo" accept
-
-    # DNS (both, in case TCP fallback)
     udp dport 53 accept
     tcp dport 53 accept
-
-    # Web for downloads (GitHub does redirects; allow 80 + 443)
     tcp dport {80, 443} accept
   }
 }

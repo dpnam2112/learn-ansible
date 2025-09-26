@@ -1,0 +1,13 @@
+# nginx.conf (role-provided, reusable)
+user {{ nginx_user }};
+worker_processes {{ nginx_worker_processes }};
+
+events { worker_connections {{ nginx_worker_connections }}; }
+
+http {
+  # http-only snippets (servers, locations, maps, etc.)
+  include {{ nginx_conf_d_dir }}/http/*.conf;
+}
+
+# Optional: other global bits
+include {{ nginx_conf_d_dir }}/root/*.conf;  # files must contain whole blocks like http{}, stream{}, or load_module

@@ -1,0 +1,13 @@
+# roles/nginx/handlers/main.yml
+- name: validate nginx config
+  become: true
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  listen: "nginx config updated"
+
+- name: reload nginx
+  become: true
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+  listen: "nginx config updated"

@@ -1,0 +1,35 @@
+# roles/nginx/tasks/main.yml
+- name: Install nginx
+  become: true
+  ansible.builtin.package:
+    name: "{{ nginx_package_name }}"
+    state: present
+
+- name: Ensure config directories exist
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ nginx_conf_dir }}"
+    - "{{ nginx_conf_d_dir }}"
+    - "{{ nginx_conf_d_dir }}/http"
+    - "{{ nginx_conf_d_dir }}/root"
+
+- name: Deploy main nginx.conf
+  become: true
+  ansible.builtin.template:
+    src: "nginx.conf.j2"
+    dest: "{{ nginx_conf_path }}"
+    mode: "0644"
+  notify:
+    - validate nginx config
+    - reload nginx
+
+- name: Enable and start nginx
+  become: true
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true

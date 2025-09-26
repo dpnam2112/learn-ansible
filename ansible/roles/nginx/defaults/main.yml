@@ -1,0 +1,13 @@
+# roles/nginx/defaults/main.yml
+nginx_package_name: nginx
+
+# Where nginx puts its main config on Debian/Ubuntu
+nginx_conf_path: /etc/nginx/nginx.conf
+nginx_conf_dir: /etc/nginx
+nginx_conf_d_dir: "{{ nginx_conf_dir }}/conf.d"
+
+# Basic nginx tuning
+nginx_user: www-data
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+nginx_server_names_hash_bucket_size: 64

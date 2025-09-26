@@ -2,10 +2,11 @@
 provisioning = {{ grafana_provisioning_dir }}
 data = {{ grafana_data_dir }}
 
-[server]
-http_addr =
-http_port = {{ grafana_http_port }}
-
 [security]
 admin_user = {{ grafana_admin_user }}
 admin_password = {{ grafana_admin_password }}
+
+[server]
+root_url = http://192.168.56.15/grafana/ # TODO: make this ip-agnostic
+serve_from_sub_path = true
+http_port = {{ grafana_http_port }}

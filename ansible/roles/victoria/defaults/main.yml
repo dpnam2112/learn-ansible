@@ -6,4 +6,6 @@ victoria_storage_path: /var/lib/victoria-metrics-data
 victoria_http_port: 8428
 victoria_retention: "30d"
 
+victoria_http_base_path_prefix: /victoria
+
 supervisord_conf_dir: /etc/supervisor/conf.d

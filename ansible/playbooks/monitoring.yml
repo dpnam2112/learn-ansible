@@ -7,6 +7,8 @@
     additional_packages:
       - supervisor
     firewall_enable_baseline: false
+    nginx_conf_d_dir: /etc/nginx/conf.d
+    nginx_conf_d_template_dir: "{{ playbook_dir }}/../config_templates/nginx/monitoring/conf.d"
 
   pre_tasks:
     - name: Ensure apt cache is fresh
@@ -21,6 +23,7 @@
   roles:
     - role: common
     - role: firewall
+    - role: nginx
 
   tasks:
     - name: Install firewall global definitions
@@ -49,6 +52,15 @@
         group: root
         mode: "0644"
       notify: reload nftables
+
+    - name: Render nginx http cnofig
+      become: true
+      ansible.builtin.template:
+        src: "{{ nginx_conf_d_template_dir }}/http/main.conf"
+        dest: "{{ nginx_conf_d_dir }}/http/main.conf"
+        mode: "0640"
+      notify:
+        - nginx config updated
 
   post_tasks:
     - name: Include supervisord
