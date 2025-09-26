@@ -68,3 +68,8 @@ users:
 ssh_port: 22
 permit_root_login: "prohibit-password"
 allow_tcp_forwarding: "yes"
+
+# Port of inner services
+backend_http_port: 8000
+victoria_http_port: 8428
+grafana_http_port: 3000

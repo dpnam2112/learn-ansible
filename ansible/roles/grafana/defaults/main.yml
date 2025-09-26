@@ -1,0 +1,25 @@
+grafana_version: "11.2.2"
+grafana_dist: "linux-amd64"
+grafana_install_dir: /opt
+grafana_prefix_dir: "{{ grafana_install_dir }}/grafana-{{ grafana_version }}"
+
+# Synlink to the selected version of Grafana
+grafana_current_link: "{{ grafana_install_dir }}/grafana"
+
+grafana_archive: "/tmp/grafana-{{ grafana_version }}.{{ grafana_dist }}.tar.gz"
+grafana_download_url: "https://dl.grafana.com/oss/release/grafana-{{ grafana_version }}.{{ grafana_dist }}.tar.gz"
+grafana_checksum: "sha256:860197db2000579589b02fbce724af5d008289efd208637f56ea311bdb726cfa"  # optionally: sha256:...
+
+# Runtime
+grafana_ini_path: /etc/grafana/grafana.ini
+grafana_etc_dir: /etc/grafana
+grafana_provisioning_dir: "{{ grafana_etc_dir }}/provisioning"
+grafana_data_dir: /var/lib/grafana
+
+grafana_user: grafana
+grafana_group: grafana
+grafana_http_port: 3000
+
+grafana_admin_user: namdp_zops
+grafana_admin_password: namdp_zops
+

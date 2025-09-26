@@ -1,0 +1,14 @@
+[program:{{ name }}]
+command={{ command }}
+directory={{ directory | default('/') }}
+autostart=true
+autorestart=true
+startsecs=5
+stopsignal=TERM
+stopasgroup=true
+killasgroup=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/{{ name }}.log
+stderr_logfile=/var/log/supervisor/{{ name }}.err
+user={{ user | default('root') }}
+environment={{ environment | default('') }}

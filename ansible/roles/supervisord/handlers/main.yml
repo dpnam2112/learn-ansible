@@ -1,0 +1,7 @@
+- name: supervisorctl reread
+  listen: supervisor changed
+  ansible.builtin.command: supervisorctl reread
+
+- name: supervisorctl update
+  listen: supervisor changed
+  ansible.builtin.command: supervisorctl update

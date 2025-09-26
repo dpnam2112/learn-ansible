@@ -1,0 +1,12 @@
+[program:victoria-metrics]
+command={{ victoria_bin_path }} -storageDataPath={{ victoria_storage_path }} -httpListenAddr=:{{ victoria_http_port }} -retentionPeriod={{ victoria_retention }}
+autostart=true
+autorestart=true
+startsecs=5
+stopsignal=TERM
+stopasgroup=true
+killasgroup=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/victoria.log
+stderr_logfile=/var/log/supervisor/victoria.err
+user={{ victoria_user }}

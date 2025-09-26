@@ -1,0 +1,67 @@
+- name: Create victoria user
+  ansible.builtin.user:
+    name: "{{ victoria_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+
+- name: Ensure data dir exists
+  ansible.builtin.file:
+    path: "{{ victoria_storage_path }}"
+    state: directory
+    owner: "{{ victoria_user }}"
+    group: "{{ victoria_group | default(victoria_user) }}"
+    mode: "0755"
+
+- name: Download VictoriaMetrics archive (pinned)
+  ansible.builtin.get_url:
+    url: "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.126.0/victoria-metrics-linux-386-v1.126.0.tar.gz"
+    dest: /tmp/victoria-metrics.tar.gz
+    mode: "0644"
+  register: vm_tar
+
+- name: Ensure data dir exists
+  ansible.builtin.file:
+    path: /tmp/vm_extract
+    state: directory
+    owner: "{{ victoria_user }}"
+    group: "{{ victoria_group | default(victoria_user) }}"
+    mode: "0755"
+
+- name: Unpack archive to temp dir
+  ansible.builtin.unarchive:
+    src: /tmp/victoria-metrics.tar.gz
+    dest: /tmp/vm_extract
+    remote_src: true
+    extra_opts: ["--strip-components=0"]
+
+- name: Copy victoria-metrics-prod binary into place
+  ansible.builtin.copy:
+    src: /tmp/vm_extract/victoria-metrics-prod
+    dest: "{{ victoria_bin_path }}"
+    remote_src: true
+    owner: "{{ victoria_user }}"
+    group: "{{ victoria_group | default(victoria_user) }}"
+    mode: "0755"
+
+- name: Clean up temp dir
+  ansible.builtin.file:
+    path: /tmp/vm_extract
+    state: absent
+
+- name: Ensure binary perms
+  ansible.builtin.file:
+    path: "{{ victoria_bin_path }}"
+    state: file
+    owner: "{{ victoria_user }}"
+    group: "{{ victoria_group | default(victoria_user) }}"
+    mode: "0755"
+
+- name: Drop supervisord program for VictoriaMetrics
+  ansible.builtin.template:
+    src: victoria.conf.j2
+    dest: "{{ supervisord_conf_dir }}/victoria-metrics.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: supervisor changed

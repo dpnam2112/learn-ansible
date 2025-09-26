@@ -1,0 +1,9 @@
+victoria_version: v1.122.4
+victoria_bin_path: /usr/local/bin/victoria-metrics
+victoria_user: victoria
+victoria_group: victoria
+victoria_storage_path: /var/lib/victoria-metrics-data
+victoria_http_port: 8428
+victoria_retention: "30d"
+
+supervisord_conf_dir: /etc/supervisor/conf.d

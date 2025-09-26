@@ -1,0 +1,103 @@
+# Install Grafana from pre-built tarball, manage config, and run under supervisord.
+
+- name: Ensure grafana group exists
+  ansible.builtin.group:
+    name: "{{ grafana_group }}"
+    system: true
+
+- name: Ensure grafana user exists (nologin)
+  ansible.builtin.user:
+    name: "{{ grafana_user }}"
+    group: "{{ grafana_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+
+- name: Ensure install base dir exists
+  ansible.builtin.file:
+    path: "{{ grafana_install_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download Grafana tarball
+  ansible.builtin.get_url:
+    url: "{{ grafana_download_url }}"
+    dest: "{{ grafana_archive }}"
+    mode: "0644"
+    checksum: "{{ grafana_checksum | default(omit) }}"
+
+- name: Ensure version dir exists (target of extraction)
+  ansible.builtin.file:
+    path: "{{ grafana_prefix_dir }}"
+    state: directory
+    mode: "0755"
+
+# Put contents directly under /opt/grafana-<version>/ (no nested top dir)
+- name: Unpack Grafana into version dir (strip top-level folder)
+  ansible.builtin.unarchive:
+    src: "{{ grafana_archive }}"
+    dest: "{{ grafana_prefix_dir }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+
+- name: Create convenience symlinks in /usr/sbin
+  ansible.builtin.file:
+    src: "{{ grafana_prefix_dir }}/bin/{{ item }}"
+    dest: "/usr/sbin/{{ item }}"
+    state: link
+  loop:
+    - grafana-server
+    - grafana-cli
+
+- name: Point /opt/grafana -> current version
+  ansible.builtin.file:
+    src: "{{ grafana_prefix_dir }}"
+    dest: "{{ grafana_current_link }}"
+    state: link
+    force: true
+
+- name: Ensure /provisioning dirs exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ grafana_provisioning_dir }}"
+
+- name: Ensure grafana data dir perms
+  ansible.builtin.file:
+    path: "{{ grafana_data_dir }}"
+    state: directory
+    owner: "{{ grafana_user }}"
+    group: "{{ grafana_group }}"
+    mode: "0755"
+
+- name: Write grafana.ini
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: "{{ grafana_ini_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: supervisor changed
+
+- name: Drop supervisord program for Grafana
+  ansible.builtin.template:
+    src: grafana.conf.j2
+    dest: "{{ supervisord_conf_dir }}/grafana.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: supervisor changed
+
+# If a distro package ever existed before, stop/disable it without failing.
+- name: Disable systemd grafana (we use supervisord)
+  ansible.builtin.systemd:
+    name: grafana-server
+    enabled: false
+    state: stopped
+  failed_when: false
+

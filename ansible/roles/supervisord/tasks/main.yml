@@ -1,0 +1,10 @@
+- name: Ensure supervisor installed
+  ansible.builtin.package:
+    name: supervisor
+    state: present
+
+- name: Ensure supervisor running
+  ansible.builtin.service:
+    name: "{{ supervisord_service }}"
+    state: started
+    enabled: true

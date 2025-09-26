@@ -1,6 +1,7 @@
-- name: reload nftables
-  block:
-    - name: Validate ruleset (dry-run)
-      command: nft -c -f /etc/nftables.conf
-    - name: Apply rules atomically
-      command: nft -f /etc/nftables.conf
+- name: Validate ruleset (dry-run)
+  ansible.builtin.command: nft -c -f /etc/nftables.conf
+  listen: reload nftables
+
+- name: Apply rules atomically
+  ansible.builtin.command: nft -f /etc/nftables.conf
+  listen: reload nftables

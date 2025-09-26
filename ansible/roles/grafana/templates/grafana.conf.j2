@@ -1,0 +1,13 @@
+[program:grafana]
+command=/usr/sbin/grafana-server --homepath={{ grafana_current_link }} --config={{ grafana_ini_path }}
+autostart=true
+autorestart=true
+startsecs=5
+stopsignal=TERM
+stopasgroup=true
+killasgroup=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/grafana.log
+stderr_logfile=/var/log/supervisor/grafana.err
+user={{ grafana_user }}
+

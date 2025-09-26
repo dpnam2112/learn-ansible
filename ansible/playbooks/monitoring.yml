@@ -1,21 +1,64 @@
-- name: Setup app deployment environment
-  hosts: app
+- name: Monitoring VM — Grafana + VictoriaMetrics (supervisord)
+  hosts: monitoring
   become: true
+  gather_facts: true
 
   vars:
-    # nftables firewall configuration
-    # Read ./roles/firewall for more details.
-    additional_packages: ["supervsior"]
+    additional_packages:
+      - supervisor
+    firewall_enable_baseline: false
 
-  tasks:
+  pre_tasks:
+    - name: Ensure apt cache is fresh
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
     - name: Merge base + additional packages (dedup)
       ansible.builtin.set_fact:
         common_packages: "{{ (common_packages | default([])) | union(additional_packages | default([])) }}"
 
-      # TODO: 
-    - name: Configure firewall
+  roles:
+    - role: common
+    - role: firewall
 
-    - name: Install victoria
-      ansible.builtin.import_tasks: "{{ playbook_dir }}/tasks"
+  tasks:
+    - name: Install firewall global definitions
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../config_templates/firewall/global/ip_def.nft.j2"
+        dest: "/etc/nftables.d/global/ip_def.nft"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: reload nftables
 
-    - name:
+    - name: Install firewall trusted subnets
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../config_templates/firewall/global/subnets.nft.j2"
+        dest: "/etc/nftables.d/global/subnets.nft"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: reload nftables
+
+    - name: Install monitoring group firewall rules
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../config_templates/firewall/groups/monitoring.nft.j2"
+        dest: "/etc/nftables.d/groups/monitoring.nft"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: reload nftables
+
+  post_tasks:
+    - name: Include supervisord
+      ansible.builtin.import_role:
+        name: supervisord
+
+    - name: Include VictoriaMetrics
+      ansible.builtin.import_role:
+        name: victoria
+
+    - name: Include Grafana
+      ansible.builtin.import_role:
+        name: grafana
