@@ -96,7 +96,7 @@
             validate: "keepalived -t -f %s"
           notify: reload keepalived
 
-        - name: Install node exporter
+        - name: Configure node exporter
           ansible.builtin.import_role:
             name: node_exporter
 

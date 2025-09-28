@@ -15,6 +15,9 @@ table inet filter {
 
         tcp dport {{ backend_http_port }}  ip saddr $trusted_subnets accept
 
+	# Node exporter
+        tcp dport {{ node_exporter_port }}  ip saddr $trusted_subnets accept
+
 	# VRRP — allow keepalived chatter
 	ip protocol $vrrp ip saddr $trusted_subnets accept
 

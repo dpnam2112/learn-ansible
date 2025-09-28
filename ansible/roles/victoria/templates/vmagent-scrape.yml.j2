@@ -1,3 +1,36 @@
+# -----------------------------------------------------------------------------
+# vmagent-scrape.yml.j2
+#
+# GUIDE:
+# - Define scrape configs in your play or group_vars:
+#
+#   vmagent_scrape_configs:
+#     # Example 1: Explicit targets
+#     - job_name: node_local
+#       targets:
+#         - "localhost:9100"
+#
+#     # Example 2: Expand one group
+#     - job_name: app_nodes
+#       group: "app"
+#       port: 9100
+#
+#     # Example 3: Expand multiple groups
+#     - job_name: mixed_nodes
+#       groups: ["app", "db", "cache"]
+#       port: 9100
+#
+# - Per-host overrides:
+#   Set `node_exporter_port` in host_vars if a host doesn’t use the default.
+#
+# - IPv6-safe:
+#   Addresses like `2001:db8::1` are wrapped in [brackets]:port automatically.
+#
+# PURPOSE:
+#   This template merges the configs, expands groups into targets, deduplicates,
+#   and renders a valid vmagent scrape.yml.
+# -----------------------------------------------------------------------------
+
 global:
   scrape_interval: {{ vmagent_global_scrape_interval }}
 
@@ -6,8 +39,36 @@ scrape_configs:
   - job_name: {{ sc.job_name }}
     static_configs:
       - targets:
-{% for t in sc.targets %}
+{% if sc.targets is defined %}
+{%   for t in sc.targets %}
           - {{ t }}
-{% endfor %}
+{%   endfor %}
+{% else %}
+{# Build a unique host list from one or many groups #}
+{%   set _hosts = [] %}
+{%   if sc.group is defined %}
+{%     set _hosts = (groups[sc.group] | default([])) %}
+{%   elif sc.groups is defined %}
+{%     set _hosts = (sc.groups
+                    | map('extract', groups)
+                    | map('default', [])
+                    | list
+                    | flatten
+                    | unique) %}
+{%   endif %}
+
+{%   for h in _hosts %}
+{# Port precedence: host override > sc.port (job-level default) > 9100 #}
+{%     set _port = hostvars[h].node_exporter_port
+                  | default(sc.port | default(9100)) %}
+{# IPv6-safe formatting if ansible_host looks like an IPv6 literal #}
+{%     set _host = (hostvars[h].ansible_host | default(h)) %}
+{%     if ':' in _host and not _host.startswith('[') %}
+          - "[{{ _host }}]:{{ _port }}"
+{%     else %}
+          - "{{ _host }}:{{ _port }}"
+{%     endif %}
+{%   endfor %}
+{% endif %}
 {% endfor %}
 

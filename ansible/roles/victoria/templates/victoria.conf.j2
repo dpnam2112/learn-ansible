@@ -1,6 +1,5 @@
 [program:victoria-metrics]
-command={{ victoria_bin_path }} -storageDataPath={{ victoria_storage_path }} -httpListenAddr=:{{ victoria_http_port }} -retentionPeriod={{ victoria_retention }} -http.pathPrefix={{
-victoria_http_base_path_prefix }}
+command={{ victoria_bin_path }} -storageDataPath={{ victoria_storage_path }} -httpListenAddr=:{{ victoria_http_port }} -retentionPeriod={{ victoria_retention }} -http.pathPrefix={{ victoria_http_base_path_prefix }}
 autostart=true
 autorestart=true
 startsecs=5

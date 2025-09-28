@@ -12,7 +12,7 @@ node_exporter_bin_dir: /usr/local/bin
 node_exporter_bin_path: "{{ node_exporter_bin_dir }}/node_exporter"
 
 # Listen on all interfaces by default; lock this down if scraping locally.
-node_exporter_listen_address: 9100
+node_exporter_port: 9100
 
 # Textfile collector directory (created if set)
 node_exporter_textfile_dir: /var/lib/node_exporter/textfile

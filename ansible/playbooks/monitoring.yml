@@ -70,6 +70,12 @@
     - name: Include VictoriaMetrics
       ansible.builtin.import_role:
         name: victoria
+      vars:
+        vmagent_global_scrape_interval: 15s
+        vmagent_scrape_configs:
+          - job_name: app
+            groups: ["app"]
+            port: 9100
 
     - name: Include Grafana
       ansible.builtin.import_role:
