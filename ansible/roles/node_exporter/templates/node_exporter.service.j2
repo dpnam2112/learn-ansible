@@ -1,0 +1,30 @@
+[Unit]
+Description=Prometheus Node Exporter
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/prometheus/node_exporter
+
+[Service]
+User={{ node_exporter_user }}
+Group={{ node_exporter_group }}
+ExecStart={{ node_exporter_bin_path }} \
+  --web.listen-address=:{{ node_exporter_listen_address }}{% if node_exporter_manage_textfile_dir and node_exporter_textfile_dir %} \
+  --collector.textfile.directory={{ node_exporter_textfile_dir }}{% endif %}{% for flag in node_exporter_extra_collectors %} \
+  {{ flag }}{% endfor %}{% for flag in node_exporter_disable_collectors %} \
+  {{ flag }}{% endfor %}{% for flag in node_exporter_extra_flags %} \
+  {{ flag }}{% endfor %}
+Restart=always
+RestartSec=2
+
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target
+

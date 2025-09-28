@@ -1,0 +1,39 @@
+# Node Exporter defaults (safe to override in your playbook or inventory)
+node_exporter_version: "1.9.1"
+
+# linux-amd64, linux-arm64, linux-386, etc. Auto-detected in vars/main.yml.
+node_exporter_os: "linux"
+node_exporter_arch: "{{ node_exporter_arch_map[ansible_architecture] | default('amd64') }}"
+
+node_exporter_user: nodeexp
+node_exporter_group: nodeexp
+
+node_exporter_bin_dir: /usr/local/bin
+node_exporter_bin_path: "{{ node_exporter_bin_dir }}/node_exporter"
+
+# Listen on all interfaces by default; lock this down if scraping locally.
+node_exporter_listen_address: 9100
+
+# Textfile collector directory (created if set)
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile
+node_exporter_manage_textfile_dir: true
+
+# Extra collectors: e.g., ["--collector.systemd", "--collector.tcpstat"]
+node_exporter_extra_collectors: []
+
+# Disable collectors: e.g., ["--no-collector.zfs"]
+node_exporter_disable_collectors: []
+
+# Any extra flags you want to pass through as-is
+node_exporter_extra_flags: []
+
+# Service management
+node_exporter_service_enabled: true
+node_exporter_service_state: started
+
+# Downloads
+node_exporter_download_base: "https://github.com/prometheus/node_exporter/releases/download"
+node_exporter_tmp_dir: "/tmp/node_exporter-{{ node_exporter_version }}"
+node_exporter_archive: "node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}.tar.gz"
+node_exporter_url: "{{ node_exporter_download_base }}/v{{ node_exporter_version }}/{{ node_exporter_archive }}"
+node_exporter_checksum: "sha256:becb950ee80daa8ae7331d77966d94a611af79ad0d3307380907e0ec08f5b4e8"

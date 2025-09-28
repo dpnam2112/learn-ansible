@@ -1,0 +1,11 @@
+---
+- name: daemon-reload
+  ansible.builtin.command: systemctl daemon-reload
+  become: true
+
+- name: restart node_exporter
+  ansible.builtin.service:
+    name: node_exporter
+    state: restarted
+    enabled: "{{ node_exporter_service_enabled }}"
+  become: true

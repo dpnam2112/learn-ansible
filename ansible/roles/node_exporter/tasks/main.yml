@@ -1,0 +1,82 @@
+---
+- name: Ensure node exporter group exists
+  ansible.builtin.group:
+    name: "{{ node_exporter_group }}"
+    system: true
+  become: true
+
+- name: Ensure node exporter user exists (nologin)
+  ansible.builtin.user:
+    name: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+- name: Create temp dir
+  ansible.builtin.file:
+    path: "{{ node_exporter_tmp_dir }}"
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Download node exporter tarball
+  ansible.builtin.get_url:
+    url: "{{ node_exporter_url }}"
+    dest: "{{ node_exporter_tmp_dir }}/{{ node_exporter_archive }}"
+    mode: "0644"
+    checksum: "{{ node_exporter_checksum | default(omit) }}"
+  become: true
+
+- name: Unpack tarball
+  ansible.builtin.unarchive:
+    src: "{{ node_exporter_tmp_dir }}/{{ node_exporter_archive }}"
+    dest: "{{ node_exporter_tmp_dir }}"
+    remote_src: true
+  become: true
+
+- name: Install binary
+  ansible.builtin.copy:
+    src: "{{ node_exporter_tmp_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}/node_exporter"
+    dest: "{{ node_exporter_bin_path }}"
+    mode: "0755"
+    owner: root
+    group: root
+    remote_src: true
+  notify: restart node_exporter
+  become: true
+
+- name: Manage textfile collector directory (optional)
+  when: node_exporter_manage_textfile_dir and node_exporter_textfile_dir | length > 0
+  ansible.builtin.file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    mode: "0755"
+  become: true
+
+- name: Install systemd unit
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    mode: "0644"
+  notify:
+    - daemon-reload
+    - restart node_exporter
+  become: true
+
+- name: Ensure service state
+  ansible.builtin.service:
+    name: node_exporter
+    state: "{{ node_exporter_service_state }}"
+    enabled: "{{ node_exporter_service_enabled }}"
+  become: true
+
+- name: Cleanup temp directory
+  ansible.builtin.file:
+    path: "{{ node_exporter_tmp_dir }}"
+    state: absent
+  become: true
+
