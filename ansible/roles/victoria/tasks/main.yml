@@ -65,3 +65,6 @@
     group: root
     mode: "0644"
   notify: supervisor changed
+
+- name: Install vmutils
+  ansible.builtin.import_tasks: vmutils.yml

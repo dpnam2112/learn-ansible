@@ -1,0 +1,7 @@
+[program:vmagent]
+command={{ vmutils_bin_dir}}/vmagent-prod -promscrape.config={{ vmagent_scrape_config_path }} -remoteWrite.url={{ vmagent_remote_write_url }} -remoteWrite.tmpDataPath={{ vmagent_tmp_path }}
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/vmagent.log
+stderr_logfile=/var/log/supervisor/vmagent.err
+user={{ victoria_user }}

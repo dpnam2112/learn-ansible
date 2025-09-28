@@ -1,4 +1,6 @@
-victoria_version: v1.122.4
+victoria_version: v1.126.0
+victoria_arch: amd64
+victoria_kernel: linux
 victoria_bin_path: /usr/local/bin/victoria-metrics
 victoria_user: victoria
 victoria_group: victoria
@@ -9,3 +11,19 @@ victoria_retention: "30d"
 victoria_http_base_path_prefix: /victoria
 
 supervisord_conf_dir: /etc/supervisor/conf.d
+
+# vmutils config
+vmutils_bin_dir: /usr/local/bin
+vmutils_archive_checksum: "sha256:719873fdf3f65a8e22a9a0b909101e7cf14403b81b93a3f51f190a4e2dafc220"
+
+vmagent_enabled: true
+vmagent_config_dir: /etc/vmagent
+vmagent_scrape_config_path: "{{ vmagent_config_dir }}/scrape.yml"
+vmagent_remote_write_url: "http://localhost:{{ victoria_http_port }}/api/v1/write"
+vmagent_tmp_path: /var/lib/vmagent
+
+vmagent_global_scrape_interval: 15s
+vmagent_scrape_configs:
+  - job_name: node
+    targets:
+      - "localhost:9100"

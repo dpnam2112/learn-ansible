@@ -1,4 +1,4 @@
-grafana_version: "11.2.2"
+grafana_version: "12.2.0"
 grafana_dist: "linux-amd64"
 grafana_install_dir: /opt
 grafana_prefix_dir: "{{ grafana_install_dir }}/grafana-{{ grafana_version }}"
@@ -7,8 +7,8 @@ grafana_prefix_dir: "{{ grafana_install_dir }}/grafana-{{ grafana_version }}"
 grafana_current_link: "{{ grafana_install_dir }}/grafana"
 
 grafana_archive: "/tmp/grafana-{{ grafana_version }}.{{ grafana_dist }}.tar.gz"
-grafana_download_url: "https://dl.grafana.com/oss/release/grafana-{{ grafana_version }}.{{ grafana_dist }}.tar.gz"
-grafana_checksum: "sha256:860197db2000579589b02fbce724af5d008289efd208637f56ea311bdb726cfa"  # optionally: sha256:...
+grafana_download_url: "https://dl.grafana.com/grafana/release/12.2.0/grafana_12.2.0_17949786146_linux_amd64.tar.gz"
+grafana_checksum: "sha256:c4f53551ed4887c792caeb9d02fa0c1a36e3db9ee8bdda32b1ced810cb135a93"  # optionally: sha256:...
 
 # Runtime
 grafana_ini_path: /etc/grafana/grafana.ini
