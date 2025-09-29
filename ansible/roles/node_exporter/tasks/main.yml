@@ -26,7 +26,7 @@
     url: "{{ node_exporter_url }}"
     dest: "{{ node_exporter_tmp_dir }}/{{ node_exporter_archive }}"
     mode: "0644"
-    checksum: "{{ node_exporter_checksum | default(omit) }}"
+    checksum: "{{ node_exporter_checksum }}"
   become: true
 
 - name: Unpack tarball

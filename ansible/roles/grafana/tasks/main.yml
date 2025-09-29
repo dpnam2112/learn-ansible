@@ -1,5 +1,11 @@
 # Install Grafana from pre-built tarball, manage config, and run under supervisord.
 
+- name: Check if supervisorctl exists
+  ansible.builtin.command: which supervisorctl
+  register: supervisor_check
+  changed_when: false
+  failed_when: false
+
 - name: Ensure grafana group exists
   ansible.builtin.group:
     name: "{{ grafana_group }}"
@@ -65,7 +71,14 @@
     group: root
     mode: "0755"
   loop:
-    - "{{ grafana_provisioning_dir }}"
+    - "{{ grafana_provisioning_dir }}/datasources"
+
+- name: Render datasources provisioning
+  ansible.builtin.template:
+    src: provisioning/datasources.yml.j2
+    dest: "{{ grafana_provisioning_dir }}/datasources/victoria.yml"
+    mode: "0644"
+  notify: supervisor changed
 
 - name: Ensure grafana data dir perms
   ansible.builtin.file:

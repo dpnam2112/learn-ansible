@@ -80,3 +80,12 @@
     - name: Include Grafana
       ansible.builtin.import_role:
         name: grafana
+      vars:
+        grafana_datasources:
+        - name: VictoriaMetrics
+          type: prometheus
+          access: proxy
+          url: "http://localhost:{{ victoria_http_port }}{{ victoria_http_base_path_prefix }}"
+          isDefault: true
+          editable: false
+
