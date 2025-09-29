@@ -1,1 +1,1 @@
-service: "postgres-db"
+service: "mysql-percona"
