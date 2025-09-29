@@ -1,0 +1,14 @@
+# Managed by Ansible (percona_mysql)
+[Unit]
+Description=Percona MySQL Server
+After=network.target
+
+[Service]
+ExecStart={{ percona_mysql_bin_path }} --defaults-file={{ percona_mysql_main_conf  }}
+Restart=on-failure
+User=root
+Group=mysql
+
+[Install]
+WantedBy=multi-user.target
+

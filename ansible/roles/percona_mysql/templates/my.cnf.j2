@@ -1,0 +1,9 @@
+# Managed by Ansible (percona_mysql)
+# Minimal main config. Extend via your own includedir/files if needed.
+
+[mysqld]
+bind-address = {{ percona_mysql_bind_address }}
+port = {{ percona_mysql_port }}
+datadir = {{ percona_mysql_datadir }}
+
+!includedir {{ percona_mysql_conf_d }}

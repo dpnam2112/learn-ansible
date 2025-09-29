@@ -1,0 +1,40 @@
+- name: validate mysql config (reload)
+  listen: reload mysql
+  ansible.builtin.command:
+    argv:
+      - "{{ percona_mysql_server_binary }}"
+      - "--defaults-file={{ percona_mysql_main_conf }}"
+      - "--validate-config"
+  register: mysql_validate_reload
+  changed_when: false
+  failed_when: mysql_validate_reload.rc != 0
+
+- name: reload mysql
+  listen: reload mysql          # ← ensure this listen is set
+  ansible.builtin.service:
+    name: "{{ percona_mysql_service_name }}"
+    state: reloaded
+
+# --- RESTART path ---
+- name: validate mysql config (restart)
+  listen: restart mysql
+  ansible.builtin.command:
+    argv:
+      - "{{ percona_mysql_server_binary }}"
+      - "--defaults-file={{ percona_mysql_main_conf }}"
+      - "--validate-config"
+  register: mysql_validate_restart
+  changed_when: false
+  failed_when: mysql_validate_restart.rc != 0
+
+- name: restart mysql
+  listen: restart mysql
+  ansible.builtin.service:
+    name: "{{ percona_mysql_service_name }}"
+    state: restarted
+
+# --- systemd ---
+- name: systemd daemon-reload
+  listen: systemd daemon-reload
+  ansible.builtin.command: systemctl daemon-reload
+  changed_when: true

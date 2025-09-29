@@ -1,0 +1,10 @@
+- name: Setup MySQL
+  hosts: db
+  become: true
+
+  vars:
+    firewall_enable_baseline: true
+
+  roles:
+    - role: common
+    - role: percona_mysql

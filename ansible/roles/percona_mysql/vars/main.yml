@@ -1,0 +1,15 @@
+# Base package names as used by Percona 8.x repos
+percona_mysql_packages_common:
+  - percona-server-server
+  - percona-server-client
+
+percona_mysql_service_name_map:
+  Debian: mysql
+  Ubuntu: mysql
+  RedHat: mysqld
+  Rocky: mysqld
+  CentOS: mysqld
+  Amazon: mysqld
+
+percona_mysql_default_bin_name: "{{ percona_mysql_service_name_map.get(ansible_os_family, 'mysql') }}"
+

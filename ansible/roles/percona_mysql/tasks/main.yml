@@ -1,0 +1,66 @@
+- name: Install and enable Percona Server for MySQL (Debian family)
+  import_tasks: install_debian.yml
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install and enable Percona Server for MySQL (RedHat family)
+  import_tasks: install_redhat.yml
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Locate MySQL server binary
+  ansible.builtin.command: "which {{ percona_mysql_default_bin_name }}"
+  register: mysql_bin_detect
+  changed_when: false
+  failed_when: mysql_bin_detect.rc != 0
+
+- name: Set fact for mysql real binary
+  ansible.builtin.set_fact:
+    percona_mysql_real_bin: "{{ mysql_bin_detect.stdout }}"
+
+- name: Check if the path exists
+  ansible.builtin.stat:
+    path: "{{ percona_mysql_bin_path }}"
+    follow: false
+  register: link_stat
+
+- name: Create symlink (only when missing)
+  ansible.builtin.file:
+    src: "{{ percona_mysql_bin_path }}"
+    dest: "{{ percona_mysql_real_bin }}"
+    state: link
+    user: mysql
+    group: mysql
+  when: not link_stat.stat.exists
+
+- name: Render systemd unit for mysql
+  ansible.builtin.template:
+    src: mysql.service.j2
+    dest: /etc/systemd/system/{{ percona_mysql_service_name }}.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - systemd daemon-reload
+    - restart mysql
+
+- name: Ensure MySQL service enabled/started
+  ansible.builtin.service:
+    name: "{{ percona_mysql_service_name }}"
+    enabled: "{{ percona_mysql_service_enabled }}"
+    state: "{{ percona_mysql_service_state }}"
+
+- name: ensure datadir exists
+  ansible.builtin.file:
+    path: "{{ percona_mysql_datadir }}"
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: "0750"
+
+- name: render mysql's main config
+  ansible.builtin.template:
+    src: my.cnf.j2
+    dest: "{{ percona_mysql_main_conf }}"
+    owner: mysql
+    group: mysql
+    mode: "0644"
+  notify: restart mysql

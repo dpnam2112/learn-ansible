@@ -1,0 +1,50 @@
+---
+# Install Percona Server for MySQL 8.0 on Debian/Ubuntu
+
+- name: Ensure prerequisites are present
+  apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Download percona-release .deb
+  get_url:
+    url: https://repo.percona.com/apt/percona-release_latest.generic_all.deb
+    dest: /tmp/percona-release_latest.generic_all.deb
+    mode: "0644"
+  become: true
+
+- name: Install percona-release
+  apt:
+    deb: /tmp/percona-release_latest.generic_all.deb
+  become: true
+
+# Percona docs use `percona-release setup ps80` on APT
+- name: Configure Percona PS 8.0 repo (setup)
+  command: percona-release setup ps80
+  register: percona_release_setup
+  changed_when: "'Enabling the Percona Server 8.0 repository' in percona_release_setup.stdout or percona_release_setup.rc == 0"
+  become: true
+
+# And explicitly enable the ps-80 *release* channel
+- name: Enable ps-80 release repo
+  command: percona-release enable ps-80 release
+  register: percona_release_enable
+  changed_when: "'Enabling the Percona Server 8.0 repository' in percona_release_enable.stdout or percona_release_enable.rc == 0"
+  become: true
+
+- name: Update apt cache after enabling Percona repos
+  apt:
+    update_cache: yes
+  become: true
+
+- name: Install Percona Server for MySQL 8.0
+  apt:
+    name: percona-server-server
+    state: present
+  become: true

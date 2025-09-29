@@ -1,0 +1,18 @@
+# Minimal public API
+percona_mysql_version: "8.0"
+percona_mysql_bind_address: "0.0.0.0"
+percona_mysql_port: 3306
+percona_mysql_service_enabled: true
+percona_mysql_service_state: started
+
+percona_mysql_datadir: /var/lib/mysql
+percona_mysql_main_conf: /etc/mysql/my.cnf
+percona_mysql_conf_d: /etc/mysql/conf.d
+percona_mysql_socket: "/var/lib/mysql/mysql.sock"
+
+# Binary used for config validation handlers
+percona_mysql_server_binary: "/usr/sbin/mysqld"
+percona_mysql_bin_path: /usr/bin/mysql
+
+percona_mysql_systemd_conf: /etc/mysql/my.cnf
+percona_mysql_service_name: mysql
