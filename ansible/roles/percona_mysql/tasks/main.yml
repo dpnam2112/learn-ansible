@@ -23,8 +23,8 @@
   ansible.builtin.file:
     path: "{{ percona_mysql_datadir }}"
     state: directory
-    owner: mysql
-    group: mysql
+    owner: "{{ percona_mysql_user }}"
+    group: "{{ percona_mysql_group }}"
     mode: "0750"
 
 - name: Ensure MySQL service enabled/started
@@ -37,7 +37,7 @@
   ansible.builtin.template:
     src: my.cnf.j2
     dest: "{{ percona_mysql_main_conf }}"
-    owner: mysql
-    group: mysql
+    owner: "{{ percona_mysql_user }}"
+    group: "{{ percona_mysql_group }}"
     mode: "0644"
   notify: restart mysql

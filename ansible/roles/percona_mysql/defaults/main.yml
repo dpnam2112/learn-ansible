@@ -15,3 +15,6 @@ percona_mysql_server_bin: "/usr/sbin/mysqld"
 
 percona_mysql_systemd_conf: /etc/mysql/my.cnf
 percona_mysql_service_name: mysql
+
+percona_mysql_user: mysql
+percona_mysql_group: mysql
