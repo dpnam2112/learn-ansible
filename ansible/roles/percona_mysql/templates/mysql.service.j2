@@ -2,12 +2,16 @@
 [Unit]
 Description=Percona MySQL Server
 After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=10
 
 [Service]
-ExecStart={{ percona_mysql_bin_path }} --defaults-file={{ percona_mysql_main_conf  }}
+ExecStart={{ percona_mysql_server_bin }} --defaults-file={{ percona_mysql_main_conf  }}
 Restart=on-failure
-User=root
+User=mysql
 Group=mysql
+RestartSec=5
+
 
 [Install]
 WantedBy=multi-user.target
