@@ -2,9 +2,12 @@
 
 table inet filter {
     define input_allowed_tcp_ports = { 22, {{ node_exporter_port }}, {{ percona_mysql_port }} }
+
     chain input {
         type filter hook input priority 0;
         policy drop;
+
+	ct state established,related accept
 
         # Allow loopback traffic
         iifname "lo" accept
