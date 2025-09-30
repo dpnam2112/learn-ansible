@@ -8,3 +8,30 @@
   roles:
     - role: common
     - role: percona_mysql
+  tasks:
+    - name: Firewall config (nftables)
+      block:
+      - name: Firewall scaffold
+        ansible.builtin.import_role:
+          name: firewall
+
+      - name: Render global nft snippets
+        template:
+          src: "{{ item.src }}"
+          dest: "/etc/nftables.d/global/{{ item.dest }}"
+          owner: root
+          group: root
+          mode: "0644"
+        loop:
+          - { src: "{{ playbook_dir }}/../config_templates/firewall/global/ip_def.nft.j2",  dest: "ip_def.nft" }
+          - { src: "{{ playbook_dir }}/../config_templates/firewall/global/subnets.nft.j2", dest: "subnets.nft" }
+
+      - name: Render group snippet (db)
+        template:
+          src: "{{ playbook_dir }}/../config_templates/firewall/groups/db.nft.j2"
+          dest: "/etc/nftables.d/groups/{{ service }}.nft"
+          owner: root
+          group: root
+          mode: "0644"
+      notify:
+        - reload nftables

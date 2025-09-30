@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+
+table inet filter {
+    define input_allowed_tcp_ports = { 22, {{ node_exporter_port }}, {{ percona_mysql_port }} }
+    chain input {
+        type filter hook input priority 0;
+        policy drop;
+
+        # Allow loopback traffic
+        iifname "lo" accept
+        ip saddr 127.0.0.0/8 ct state established,related accept
+
+        tcp dport $input_allowed_tcp_ports ip saddr $trusted_subnets accept
+
+	# ICMP so ping/traceroute/etc. work
+	ip protocol icmp accept
+	ip6 nexthdr ipv6-icmp accept
+    }
+}
