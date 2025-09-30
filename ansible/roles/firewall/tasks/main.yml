@@ -12,18 +12,19 @@
     - /etc/nftables.d/hosts
     - /etc/nftables.d/custom
 
+- name: Remove all contents inside nftables.d dirs
+  become: true
+  shell: "rm -rf {{ item }}/*"
+  loop:
+    - /etc/nftables.d/global
+    - /etc/nftables.d/groups
+    - /etc/nftables.d/hosts
+    - /etc/nftables.d/custom
+
 - name: Render /etc/nftables.conf
   become: true
   template:
     src: nftables.conf.j2
     dest: /etc/nftables.conf
     mode: "0644"
-    validate: "nft -c -f %s"
   notify: reload nftables
-
-- name: Ensure nftables enabled & running
-  become: true
-  service:
-    name: "{{ firewall_nft_service_name }}"
-    enabled: true
-    state: started

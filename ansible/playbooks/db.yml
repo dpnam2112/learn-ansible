@@ -2,12 +2,6 @@
   hosts: db
   become: true
 
-  vars:
-    firewall_enable_baseline: true
-
-  roles:
-    - role: common
-    - role: percona_mysql
   tasks:
     - name: Firewall config (nftables)
       block:
@@ -35,3 +29,7 @@
           mode: "0644"
       notify:
         - reload nftables
+
+  roles:
+    - role: common
+    - role: percona_mysql
