@@ -1,7 +1,12 @@
 # {{ ansible_managed }}
 
 table inet filter {
-    define input_allowed_tcp_ports = { 22, {{ node_exporter_port }}, {{ percona_mysql_port }} }
+    define input_allowed_tcp_ports = {
+      22, # ssh
+      {{ node_exporter_port }}, # node exporter
+      {{ percona_mysql_port }}, # mysql
+      {{ nfs_port }} # network file system
+    }
 
     chain input {
         type filter hook input priority 0;

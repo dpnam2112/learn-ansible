@@ -1,0 +1,16 @@
+- hosts: db_backup
+  become: true
+  vars:
+    # Common
+    backup_nfs_root: /srv/backup/mysql
+    backup_service_user: mysqlbackup
+    backup_service_uid: 995
+    backup_service_gid: 995
+
+    # Server side: which DB hosts get a subtree + export
+    backup_exports:
+      - name: mysql_prod
+        clients: ["192.168.56.13"]
+
+  roles:
+    - backup_nfs_server

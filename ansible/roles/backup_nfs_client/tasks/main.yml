@@ -1,0 +1,30 @@
+- name: Ensure NFS client utils present (Debian/Ubuntu)
+  apt:
+    name: nfs-common
+    state: present
+    update_cache: yes
+
+- name: Create local mount root
+  file:
+    path: "{{ backup_client_mount_root }}"
+    state: directory
+    mode: "0755"
+
+- name: Create local subdirs (optional; mount covers the root)
+  loop:
+    - binlog
+    - base
+    - incr
+  file:
+    path: "{{ backup_client_mount_root }}/{{ item }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure mount present (fstab + mounted)
+  mount:
+    src: "{{ backup_server }}:{{ backup_server_export_path }}"
+    path: "{{ backup_client_mount_root }}"
+    fstype: nfs
+    opts: "{{ backup_client_mount_opts }}"
+    state: mounted
+

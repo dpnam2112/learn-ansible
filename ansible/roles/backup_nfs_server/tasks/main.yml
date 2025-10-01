@@ -1,0 +1,127 @@
+- name: Ensure NFS server packages are present (Debian/Ubuntu)
+  apt:
+    name: nfs-kernel-server
+    state: present
+    update_cache: yes
+
+- name: Ensure service user/group exists with fixed UID/GID
+  group:
+    name: "{{ backup_service_group }}"
+    gid: "{{ backup_service_gid }}"
+    state: present
+    system: yes
+
+- name: Ensure service user exists
+  user:
+    name: "{{ backup_service_user }}"
+    uid: "{{ backup_service_uid }}"
+    group: "{{ backup_service_group }}"
+    shell: /usr/sbin/nologin
+    system: yes
+    create_home: no
+    state: present
+
+- name: Create root backup directory
+  file:
+    path: "{{ backup_nfs_root }}"
+    state: directory
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0750"
+
+# Create /srv/backup/mysql/<host>
+- name: Create per-host root directories
+  loop: "{{ backup_exports }}"
+  loop_control:
+    label: "{{ item.name }}"
+  file:
+    path: "{{ backup_nfs_root }}/{{ item.name }}"
+    state: directory
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0750"
+
+# 1) /srv/backup/mysql/<host>
+- name: Create per-host root directories
+  loop: "{{ backup_exports }}"
+  loop_control:
+    label: "{{ item.name }}"
+  file:
+    path: "{{ backup_nfs_root }}/{{ item.name }}"
+    state: directory
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0750"
+
+# 2) /srv/backup/mysql/<host>/binlog
+- name: Create binlog directories
+  loop: "{{ backup_exports }}"
+  loop_control:
+    label: "{{ item.name }}/binlog"
+  file:
+    path: "{{ backup_nfs_root }}/{{ item.name }}/binlog"
+    state: directory
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0750"
+
+# 3) /srv/backup/mysql/<host>/base
+- name: Create base directories
+  loop: "{{ backup_exports }}"
+  loop_control:
+    label: "{{ item.name }}/base"
+  file:
+    path: "{{ backup_nfs_root }}/{{ item.name }}/base"
+    state: directory
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0750"
+
+# 4) /srv/backup/mysql/<host>/incr
+- name: Create incr directories
+  loop: "{{ backup_exports }}"
+  loop_control:
+    label: "{{ item.name }}/incr"
+  file:
+    path: "{{ backup_nfs_root }}/{{ item.name }}/incr"
+    state: directory
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0750"
+
+- name: Ensure base /etc/exports with include
+  template:
+    src: exports.j2
+    dest: /etc/exports
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0644"
+  notify:
+    - reload nfs exports
+
+- name: Ensure /etc/exports.d exists
+  file:
+    path: /etc/exports.d
+    state: directory
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0644"
+  notify:
+    - reload nfs exports
+
+- name: Render NFS exports
+  template:
+    src: mysql-backup.exports.j2
+    dest: /etc/exports.d/mysql-backup.exports
+    owner: "{{ backup_service_user }}"
+    group: "{{ backup_service_group }}"
+    mode: "0644"
+  notify:
+    - reload nfs exports
+
+- name: Enable & start NFS server
+  service:
+    name: nfs-server
+    state: started
+    enabled: yes
+

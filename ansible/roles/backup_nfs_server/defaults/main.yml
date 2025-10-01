@@ -1,0 +1,13 @@
+# Common
+backup_nfs_root: /srv/backup/mysql
+backup_service_user: mysqlbackup
+backup_service_group: mysqlbackup
+backup_service_uid: 995
+backup_service_gid: 995
+
+# # Server side: which DB hosts get a subtree + export
+# backup_exports:
+#   - name: prod-db-01
+#     clients: ["10.0.10.21"]   # host or CIDR
+#   - name: staging-db-01
+#     clients: ["10.0.20.31"]
