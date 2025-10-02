@@ -1,0 +1,42 @@
+services:
+  mysql:
+    image: percona/percona-server:8.0
+    container_name: db-mysql
+    environment:
+      # root password + allow host connections (important if connecting from your laptop)
+      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_ROOT_HOST: "%"          # otherwise root is only 'localhost'
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
+      - ./mysql/initdb:/docker-entrypoint-initdb.d:ro
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpw"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  cli:
+    build:
+      context: ..
+      dockerfile: docker/cli.Dockerfile
+    container_name: db-cli
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PYTHONUNBUFFERED: "1"
+      TZ: Asia/Ho_Chi_Minh
+    working_dir: /app
+    volumes:
+      - ./:/app:rw
+      - backup_nfs:/backup
+
+volumes:
+  mysql_data:
+  backup_nfs:
+

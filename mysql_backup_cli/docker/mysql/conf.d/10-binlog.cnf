@@ -1,0 +1,13 @@
+[mysqld]
+# Enable binary logging for PITR / replication
+server_id=1
+log_bin=/var/lib/mysql/mysql-bin
+binlog_format=ROW
+binlog_expire_logs_seconds=604800   # 7 days
+gtid_mode=ON
+enforce_gtid_consistency=ON
+
+# Useful performance/safety tuning
+innodb_flush_log_at_trx_commit=1
+sync_binlog=1
+
