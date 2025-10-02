@@ -1,0 +1,160 @@
+---
+- name: MySQL backup automation (no roles)
+  hosts: db
+  become: true
+  vars:
+    # --- Paths you can tweak ---
+    scripts_src_dir: "./backup_sh"                 # on your Ansible controller
+    install_dir: "/opt/mysql-backup"               # on the target hosts
+    env_file: "/etc/mysql-backup.env"
+
+    # Your NFS mount (already mounted by your existing setup)
+    base_dir: "/mnt/mysql-backup"
+
+    # Put binlogs in a global folder at the mount (not per-month)
+    binlog_global_dir: "/mnt/mysql-backup/binlogs"
+
+    # Paths to binaries on the target
+    xtrabackup_bin: "/usr/bin/xtrabackup"
+    mysql_bin: "/usr/bin/mysql"
+    mysqlbinlog_bin: "/usr/bin/mysqlbinlog"
+
+    # MySQL option file on the target (contains [client] creds)
+    mysql_option_file: "{{ percona_mysql_main_cnf }}"
+
+    # XtraBackup tuning
+    xb_parallel: 4
+    xb_extra_opts: ""   # e.g. "--compress --compress-threads=2"
+
+    # mysqlbinlog streaming opts (ensure server_id unique vs any replicas)
+    mysqlbinlog_extra_opts: "--connection-server-id=20001"
+
+    # Cron schedule for monthly full backup
+    cron_min_scaffold: "10"
+    cron_min_full: "20"
+    cron_hour: "0"      # midnight hour
+    cron_dom: "1"       # day-of-month (1st)
+
+    # Systemd unit name
+    streamer_unit: "mysql-binlog-streamer.service"
+
+  handlers:
+    - name: systemd daemon-reload
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: restart streamer
+      ansible.builtin.systemd:
+        name: "{{ streamer_unit }}"
+        state: restarted
+        enabled: true
+
+  tasks:
+    - name: Ensure install directory exists
+      ansible.builtin.file:
+        path: "{{ install_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure global base/binlog directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ base_dir }}"
+        - "{{ binlog_global_dir }}"
+
+    - name: Copy backup scripts to target
+      ansible.builtin.copy:
+        src: "{{ scripts_src_dir }}/{{ item }}"
+        dest: "{{ install_dir }}/{{ item }}"
+        mode: "0755"
+      loop:
+        - scaffold_month.sh
+        - full_backup.sh
+        - stream_binlogs.sh
+
+    - name: Drop shared environment file
+      ansible.builtin.copy:
+        dest: "{{ env_file }}"
+        mode: "0644"
+        content: |
+          # Managed by Ansible — MySQL backup env
+          export BASE_DIR={{ base_dir }}
+          export MYSQL_OPTION_FILE={{ mysql_option_file }}
+          export XTRABACKUP_BIN={{ xtrabackup_bin }}
+          export MYSQL_BIN={{ mysql_bin }}
+          export MYSQLBINLOG_BIN={{ mysqlbinlog_bin }}
+          export PARALLEL={{ xb_parallel }}
+          export EXTRA_OPTS={{ xb_extra_opts }}
+          export EXTRA_MB_OPTS={{ mysqlbinlog_extra_opts }}
+
+    - name: Create streamer systemd unit
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ streamer_unit }}"
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Stream MySQL binlogs to NFS
+          After=network-online.target remote-fs.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          User=root
+          EnvironmentFile={{ env_file }}
+          # Force binlogs to the global folder, ignoring per-month default
+          Environment=BINLOG_DIR={{ binlog_global_dir }}
+          # Defensive mkdirs before starting
+          ExecStartPre=/usr/bin/mkdir -p {{ base_dir }} {{ binlog_global_dir }}
+          ExecStart=/bin/bash -lc '{{ install_dir }}/stream_binlogs.sh'
+          Restart=always
+          RestartSec=5s
+          # Basic hardening
+          NoNewPrivileges=true
+          PrivateTmp=true
+          ProtectSystem=full
+          ProtectHome=true
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - systemd daemon-reload
+        - restart streamer
+
+    - name: Ensure streamer service is enabled and started
+      ansible.builtin.systemd:
+        name: "{{ streamer_unit }}"
+        enabled: true
+        state: started
+
+    # --- Cron jobs for monthly full backup (scaffold then full) ---
+    - name: Cron — scaffold month directory
+      ansible.builtin.cron:
+        name: "mysql-backup scaffold month"
+        user: "root"
+        minute: "{{ cron_min_scaffold }}"
+        hour: "{{ cron_hour }}"
+        day: "{{ cron_dom }}"
+        month: "*"
+        weekday: "*"
+        job: ". {{ env_file }}; BASE_DIR={{ base_dir }} {{ install_dir }}/scaffold_month.sh >> /var/log/mysql-backup.log 2>&1"
+
+    - name: Cron — run full backup at month start
+      ansible.builtin.cron:
+        name: "mysql-backup full backup"
+        user: "root"
+        minute: "{{ cron_min_full }}"
+        hour: "{{ cron_hour }}"
+        day: "{{ cron_dom }}"
+        month: "*"
+        weekday: "*"
+        job: ". {{ env_file }}; BASE_DIR={{ base_dir }} {{ install_dir }}/full_backup.sh >> /var/log/mysql-backup.log 2>&1"
+
+    - name: Ensure log file exists (optional)
+      ansible.builtin.file:
+        path: /var/log/mysql-backup.log
+        state: touch
+        mode: "0644"
+

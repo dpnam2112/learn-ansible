@@ -8,7 +8,7 @@ BINLOG_DIR="${BACKUP_DIR}/binlogs"
 
 MYSQL_BIN="${MYSQL_BIN:-/usr/bin/mysql}"
 MYSQLBINLOG_BIN="${MYSQLBINLOG_BIN:-/usr/bin/mysqlbinlog}"
-MYSQL_OPTION_FILE="${MYSQL_OPTION_FILE:-$HOME/.my.cnf}"
+MYSQL_OPTION_FILE="${MYSQL_OPTION_FILE:-/etc/mysql/my.cnf}"
 
 EXTRA_MB_OPTS="${EXTRA_MB_OPTS:-}" # e.g. "--connection-server-id=20001"
 
@@ -76,9 +76,7 @@ main() {
       # Local file complete (or equal size). Move to the next file; rotate again if none yet.
       start_file="$(next_after "${local_last}" || true)"
       if [[ -z "${start_file}" ]]; then
-        echo "[stream] No next file after ${local_last}. Forcing another rotation..."
-        "${MYSQL_BIN}" --defaults-file="${MYSQL_OPTION_FILE}" -e "FLUSH BINARY LOGS"
-        start_file="$(next_after "${local_last}" || true)"
+        echo "[stream] No next file after ${local_last}. Forcing another rotation..." "${MYSQL_BIN}" --defaults-file="${MYSQL_OPTION_FILE}" -e "FLUSH BINARY LOGS" start_file="$(next_after "${local_last}" || true)"
       fi
       if [[ -z "${start_file}" ]]; then
         echo "[ERROR] Could not determine start file after ${local_last}." >&2

@@ -7,7 +7,7 @@ MONTH="${MONTH:-$(date +%Y-%m)}"
 BACKUP_DIR="${BASE_DIR}/${MONTH}/backup"
 
 XTRABACKUP_BIN="${XTRABACKUP_BIN:-/usr/bin/xtrabackup}"
-MYSQL_OPTION_FILE="${MYSQL_OPTION_FILE:-$HOME/.my.cnf}"   # contains [client] user, password, host, port
+MYSQL_OPTION_FILE="${MYSQL_OPTION_FILE:-/etc/mysql/my.cnf}"   # contains [client] user, password, host, port
 PARALLEL="${PARALLEL:-4}"
 EXTRA_OPTS="${EXTRA_OPTS:-}"   # e.g. "--compress --compress-threads=2"
 

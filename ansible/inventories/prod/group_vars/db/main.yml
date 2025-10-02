@@ -1,1 +1,2 @@
 service: "db-mysql"
+percona_mysql_main_cnf: "/etc/mysql/my.cnf"
