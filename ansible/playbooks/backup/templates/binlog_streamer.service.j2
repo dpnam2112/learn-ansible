@@ -1,0 +1,24 @@
+[Unit]
+Description=Stream MySQL binlogs to NFS
+After=network-online.target remote-fs.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile={{ env_file }}
+# Force binlogs to the global folder, ignoring per-month default
+Environment=BINLOG_DIR={{ binlog_global_dir }}
+# Defensive mkdirs before starting
+ExecStartPre=/usr/bin/mkdir -p {{ base_dir }} {{ binlog_global_dir }}
+ExecStart=/bin/bash -lc '{{ install_dir }}/stream_binlogs.sh'
+Restart=always
+RestartSec=5s
+# Basic hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

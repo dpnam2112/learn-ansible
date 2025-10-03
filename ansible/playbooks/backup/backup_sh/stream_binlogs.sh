@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_DIR="${BASE_DIR:-/backups/mysql}"
+BACKUPS_BASEDIR="${BACKUPS_BASEDIR:-/backups/mysql}"
 MONTH="${MONTH:-$(date +%Y-%m)}"
-BACKUP_DIR="${BASE_DIR}/${MONTH}/backup"
-BINLOG_DIR="${BACKUP_DIR}/binlogs"
+BACKUP_DIR="${BACKUPS_BASEDIR}/backups" # contains physical backups
+BINLOG_DIR="${BACKUPS_BASEDIR}/binlogs" # contains binlogs
 
 MYSQL_BIN="${MYSQL_BIN:-/usr/bin/mysql}"
 MYSQLBINLOG_BIN="${MYSQLBINLOG_BIN:-/usr/bin/mysqlbinlog}"
-MYSQL_OPTION_FILE="${MYSQL_OPTION_FILE:-/etc/mysql/my.cnf}"
+MYSQL_OPTION_FILE="${MYSQL_OPTION_FILE:-~/.my.cnf}"
 
 EXTRA_MB_OPTS="${EXTRA_MB_OPTS:-}" # e.g. "--connection-server-id=20001"
 

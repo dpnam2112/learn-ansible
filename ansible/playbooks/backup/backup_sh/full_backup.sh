@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # --- Config (env-overridable) ---
-BASE_DIR="${BASE_DIR:-/backups/mysql}"
+BACKUPS_BASEDIR="${BACKUPS_BASEDIR:-/backups/mysql}"
 MONTH="${MONTH:-$(date +%Y-%m)}"
-BACKUP_DIR="${BASE_DIR}/${MONTH}/backup"
+BACKUP_DIR="${BACKUPS_BASEDIR}/${MONTH}/backup"
 
 XTRABACKUP_BIN="${XTRABACKUP_BIN:-/usr/bin/xtrabackup}"
 MYSQL_OPTION_FILE="${MYSQL_OPTION_FILE:-/etc/mysql/my.cnf}"   # contains [client] user, password, host, port

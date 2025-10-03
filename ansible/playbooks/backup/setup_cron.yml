@@ -37,6 +37,7 @@
 
     # Systemd unit name
     streamer_unit: "mysql-binlog-streamer.service"
+    template_basedir: "./templates"
 
   handlers:
     - name: systemd daemon-reload
@@ -76,49 +77,21 @@
         - stream_binlogs.sh
 
     - name: Drop shared environment file
-      ansible.builtin.copy:
+      ansible.builtin.template:
+        src: "{{ template_basedir }}/backup.env.j2"
         dest: "{{ env_file }}"
         mode: "0644"
-        content: |
-          # Managed by Ansible — MySQL backup env
-          export BASE_DIR={{ base_dir }}
-          export MYSQL_OPTION_FILE={{ mysql_option_file }}
-          export XTRABACKUP_BIN={{ xtrabackup_bin }}
-          export MYSQL_BIN={{ mysql_bin }}
-          export MYSQLBINLOG_BIN={{ mysqlbinlog_bin }}
-          export PARALLEL={{ xb_parallel }}
-          export EXTRA_OPTS={{ xb_extra_opts }}
-          export EXTRA_MB_OPTS={{ mysqlbinlog_extra_opts }}
+        owner: root
+        group: root
 
     - name: Create streamer systemd unit
-      ansible.builtin.copy:
+      ansible.builtin.template:
+        src: "{{ template_basedir }}/binlog_streamer.service.j2"
         dest: "/etc/systemd/system/{{ streamer_unit }}"
         mode: "0644"
-        content: |
-          [Unit]
-          Description=Stream MySQL binlogs to NFS
-          After=network-online.target remote-fs.target
-          Wants=network-online.target
+        owner: root
+        group: root
 
-          [Service]
-          Type=simple
-          User=root
-          EnvironmentFile={{ env_file }}
-          # Force binlogs to the global folder, ignoring per-month default
-          Environment=BINLOG_DIR={{ binlog_global_dir }}
-          # Defensive mkdirs before starting
-          ExecStartPre=/usr/bin/mkdir -p {{ base_dir }} {{ binlog_global_dir }}
-          ExecStart=/bin/bash -lc '{{ install_dir }}/stream_binlogs.sh'
-          Restart=always
-          RestartSec=5s
-          # Basic hardening
-          NoNewPrivileges=true
-          PrivateTmp=true
-          ProtectSystem=full
-          ProtectHome=true
-
-          [Install]
-          WantedBy=multi-user.target
       notify:
         - systemd daemon-reload
         - restart streamer
@@ -157,4 +130,3 @@
         path: /var/log/mysql-backup.log
         state: touch
         mode: "0644"
-
