@@ -23,6 +23,7 @@
     - "{{ gitlab_logs_dir }}"
     - "{{ gitlab_data_dir }}"
     - "{{ gitlab_compose_dir }}"
+  register: gitlab_dirs_created
 
 - name: Render gitlab.rb (source of truth)
   ansible.builtin.template:
@@ -58,3 +59,4 @@
       'Recreating' in up_out.stdout or
       'Pulling' in up_out.stdout or
       'Starting' in up_out.stdout
+  when: gitlab_dirs_created is changed or docker_compose_render is changed
