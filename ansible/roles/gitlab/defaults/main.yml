@@ -6,8 +6,8 @@ gitlab_image: "gitlab/gitlab-ce:latest"
 gitlab_hostname: "gitlab.local"
 gitlab_external_url: "http://{{ inventory_hostname }}"
 gitlab_ports:
-  http: 80
-  ssh_host_port: 2222
+  http: 8080
+  ssh: 2222
 
 gitlab_root_dir: "/srv/gitlab"
 gitlab_config_dir: "{{ gitlab_root_dir }}/config"
@@ -20,9 +20,3 @@ gitlab_timezone: "UTC"
 
 # Optional: pull image on each run; false = only pulls when you say so
 gitlab_image_pull: false
-
-# ===================================================
-# PostgreSQL Service Configuration
-# ===================================================
-gitlab_postgres_user: "gitlab"
-gitlab_postgres_db_name: "gitlab_prod"

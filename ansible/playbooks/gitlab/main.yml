@@ -16,5 +16,7 @@
 
     gitlab_image_pull: true
     gitlab_ports:
-      http: 80
-      ssh_host_port: 2222
+      http: 8080
+      ssh: 2222
+
+    gitlab_external_url: "http://{{ ansible_default_ipv4.address }}:{{ gitlab_ports.http }}"

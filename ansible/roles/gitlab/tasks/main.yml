@@ -32,7 +32,7 @@
     owner: root
     group: root
     mode: "0644"
-  register: gitlab_rb_render
+  notify: reload gitlab
 
 - name: Render docker-compose.yml
   ansible.builtin.template:
@@ -59,4 +59,4 @@
       'Recreating' in up_out.stdout or
       'Pulling' in up_out.stdout or
       'Starting' in up_out.stdout
-  when: gitlab_dirs_created is changed or docker_compose_render is changed
+  when: docker_compose_render is changed

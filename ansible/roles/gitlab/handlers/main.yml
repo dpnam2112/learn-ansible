@@ -1,0 +1,14 @@
+# roles/gitlab/handlers/main.yml
+---
+- name: Reload GitLab configuration
+  ansible.builtin.command:
+    cmd: "docker exec gitlab gitlab-ctl reconfigure"
+  listen: reload gitlab
+  become: true
+
+- name: Restart GitLab container
+  ansible.builtin.command:
+    cmd: "docker compose restart gitlab"
+    chdir: "{{ gitlab_compose_dir }}"
+  listen: restart gitlab
+
