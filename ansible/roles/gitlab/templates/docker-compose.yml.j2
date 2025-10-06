@@ -1,0 +1,14 @@
+services:
+  gitlab:
+    image: {{ gitlab_image }}
+    container_name: gitlab
+    hostname: {{ gitlab_hostname }}
+    restart: always
+    shm_size: {{ gitlab_shm_size }}
+    ports:
+      - "{{ gitlab_ports.http }}:80"
+      - "{{ gitlab_ports.ssh_host_port }}:22"
+    volumes:
+      - {{ gitlab_config_dir }}:/etc/gitlab
+      - {{ gitlab_logs_dir }}:/var/log/gitlab
+      - {{ gitlab_data_dir }}:/var/opt/gitlab

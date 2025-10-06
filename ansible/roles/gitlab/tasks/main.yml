@@ -1,0 +1,60 @@
+---
+# Simple, dependency-free GitLab Docker role
+
+- name: Assert Docker is installed
+  ansible.builtin.command: which docker
+  register: docker_check
+  changed_when: false
+
+- name: Fail if Docker is missing
+  ansible.builtin.fail:
+    msg: "Docker is not installed or not in PATH."
+  when: docker_check.rc != 0
+
+- name: Create GitLab directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ gitlab_config_dir }}"
+    - "{{ gitlab_logs_dir }}"
+    - "{{ gitlab_data_dir }}"
+    - "{{ gitlab_compose_dir }}"
+
+- name: Render gitlab.rb (source of truth)
+  ansible.builtin.template:
+    src: gitlab.rb.j2
+    dest: "{{ gitlab_config_dir }}/gitlab.rb"
+    owner: root
+    group: root
+    mode: "0644"
+  register: gitlab_rb_render
+
+- name: Render docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ gitlab_compose_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  register: docker_compose_render
+
+- name: Prune and recreate containers
+  block:
+  - ansible.builtin.shell: "docker compose down -v"
+    args:
+      chdir: "{{ gitlab_compose_dir }}"
+
+  - name: Up GitLab
+    ansible.builtin.shell: "docker compose up --force-recreate -d"
+    args:
+      chdir: "{{ gitlab_compose_dir }}"
+    register: up_out
+    changed_when: >
+      'Creating' in up_out.stdout or
+      'Recreating' in up_out.stdout or
+      'Pulling' in up_out.stdout or
+      'Starting' in up_out.stdout

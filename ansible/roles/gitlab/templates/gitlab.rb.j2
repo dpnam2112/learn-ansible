@@ -1,0 +1,8 @@
+# # Minimal Omnibus config for lab (HTTP only)
+# external_url "{{ gitlab_external_url }}"
+# gitlab_rails['gitlab_shell_ssh_port'] = {{ gitlab_ports.ssh_host_port }}
+# gitlab_rails['time_zone'] = "{{ gitlab_timezone }}"
+# 
+# # NOTE: Let's Encrypt disabled until we expose 443 and flip to https
+# letsencrypt['enable'] = false
+# # letsencrypt['contact_emails'] = ["admin@{{ gitlab_hostname }}"]

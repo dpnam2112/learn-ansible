@@ -140,11 +140,17 @@
           {{ ('Environment="HTTP_PROXY=' ~ docker_http_proxy ~ '"') if (docker_http_proxy|length>0) else '' }}
           {{ ('Environment="HTTPS_PROXY=' ~ docker_https_proxy ~ '"') if (docker_https_proxy|length>0) else '' }}
           {{ ('Environment="NO_PROXY=' ~ docker_no_proxy ~ '"') if (docker_no_proxy|length>0) else '' }}
-      notify: restart docker
+      register: proxy_dropin
 
-    - name: systemd daemon-reload
+    - name: Reload systemd if drop-in changed
       ansible.builtin.command: systemctl daemon-reload
-      changed_when: true
+      when: proxy_dropin is changed
+
+    - name: Restart Docker if drop-in changed
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+      when: proxy_dropin is changed
 
 # ---------------- Group membership ----------------
 - name: Ensure docker group users
