@@ -1,0 +1,177 @@
+---
+- name: Gather minimal facts if missing
+  ansible.builtin.setup:
+    gather_subset:
+      - '!all'
+      - 'min'
+  when: ansible_service_mgr is not defined or ansible_system is not defined
+
+- name: Assert system is Linux with systemd
+  ansible.builtin.assert:
+    that:
+      - (ansible_system | lower) == 'linux'
+      - (ansible_service_mgr | default('')) == 'systemd'
+    fail_msg: "This role requires Linux with systemd."
+
+- name: Load family-specific vars
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_os_family }}.yml"
+      paths:
+        - "{{ role_path }}/vars"
+  tags: [always]
+
+# ---------------- Runtime-only proxy dict (no files changed) ----------------
+- name: Build runtime proxy environment (install only)
+  ansible.builtin.set_fact:
+    pkg_proxy_env: >-
+      {{
+        (pkg_proxy_runtime_enable | bool)
+        | ternary(
+            {
+              'http_proxy':  pkg_http_proxy,
+              'https_proxy': pkg_https_proxy,
+              'no_proxy':    pkg_no_proxy,
+              'HTTP_PROXY':  pkg_http_proxy,
+              'HTTPS_PROXY': pkg_https_proxy,
+              'NO_PROXY':    pkg_no_proxy
+            },
+            {}
+        )
+      }}
+
+# ---------------- Prerequisites ----------------
+- name: Install prerequisite packages
+  ansible.builtin.package:
+    name: "{{ docker_prereqs }}"
+    state: present
+  environment: "{{ pkg_proxy_env }}"
+
+# ---------------- Repository setup ----------------
+- name: Add Docker apt GPG and repo (Debian/Ubuntu)
+  when:
+    - ansible_os_family == 'Debian'
+    - docker_install_repo | bool
+  block:
+    - name: Ensure keyring directory exists
+      ansible.builtin.file:
+        path: "{{ docker_keyring_path | dirname }}"
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker GPG key
+      ansible.builtin.get_url:
+        url: "{{ docker_repo_key_url }}"
+        dest: "{{ docker_keyring_path }}"
+        mode: "0644"
+        force: true
+      environment: "{{ pkg_proxy_env }}"
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: "{{ docker_apt_repo }}"
+        filename: docker
+        state: present
+
+    - name: apt update cache
+      ansible.builtin.apt:
+        update_cache: true
+      environment: "{{ pkg_proxy_env }}"
+
+- name: Add Docker yum/dnf repo (RHEL family)
+  when:
+    - ansible_os_family == 'RedHat'
+    - docker_install_repo | bool
+  block:
+    - name: Ensure /etc/yum.repos.d exists
+      ansible.builtin.file:
+        path: /etc/yum.repos.d
+        state: directory
+        mode: "0755"
+
+    - name: Drop docker-ce.repo
+      ansible.builtin.get_url:
+        url: "{{ docker_repo_url }}"
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: "0644"
+      environment: "{{ pkg_proxy_env }}"
+
+# ---------------- Install Docker Engine + Compose v2 ----------------
+- name: Install Docker packages
+  ansible.builtin.package:
+    name: "{{ docker_packages }}"
+    state: "{{ docker_package_state }}"
+  environment: "{{ pkg_proxy_env }}"
+
+# ---------------- Optional daemon.json ----------------
+- name: Configure /etc/docker/daemon.json
+  when: docker_daemon_config | length > 0
+  block:
+    - name: Ensure /etc/docker exists
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: "0755"
+
+    - name: Write daemon.json
+      ansible.builtin.template:
+        src: daemon.json.j2
+        dest: /etc/docker/daemon.json
+        mode: "0644"
+      notify: restart docker
+
+# ---------------- Optional Docker daemon proxy (explicit opt-in) ----------------
+- name: Configure Docker daemon proxy (systemd drop-in)
+  when: docker_daemon_proxy_enable | bool
+  block:
+    - name: Ensure systemd drop-in dir exists
+      ansible.builtin.file:
+        path: /etc/systemd/system/docker.service.d
+        state: directory
+        mode: "0755"
+
+    - name: Write proxy drop-in
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/docker.service.d/proxy.conf
+        mode: "0644"
+        content: |
+          [Service]
+          {{ ('Environment="HTTP_PROXY=' ~ docker_http_proxy ~ '"') if (docker_http_proxy|length>0) else '' }}
+          {{ ('Environment="HTTPS_PROXY=' ~ docker_https_proxy ~ '"') if (docker_https_proxy|length>0) else '' }}
+          {{ ('Environment="NO_PROXY=' ~ docker_no_proxy ~ '"') if (docker_no_proxy|length>0) else '' }}
+      notify: restart docker
+
+    - name: systemd daemon-reload
+      ansible.builtin.command: systemctl daemon-reload
+      changed_when: true
+
+# ---------------- Group membership ----------------
+- name: Ensure docker group users
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"
+  when: docker_users | length > 0
+
+# ---------------- Service management ----------------
+- name: Enable/Start Docker
+  ansible.builtin.service:
+    name: docker
+    enabled: "{{ docker_service_enable }}"
+    state: "{{ docker_service_state }}"
+
+# ---------------- Verification (no change) ----------------
+- name: Check Docker CLI
+  ansible.builtin.command: docker --version
+  register: docker_cli_ver
+  changed_when: false
+  failed_when: docker_cli_ver.rc != 0
+
+- name: Check Docker Compose v2
+  ansible.builtin.command: docker compose version
+  register: docker_compose_ver
+  changed_when: false
+  failed_when: docker_compose_ver.rc != 0
+

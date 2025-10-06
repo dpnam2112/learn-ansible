@@ -1,0 +1,30 @@
+# Add Docker’s official repo (recommended). Set to false to use OS repos.
+docker_install_repo: true
+docker_repo_channel: stable   # stable | test | nightly
+
+# Package state: present | latest | a pinned version (e.g., "5:27.1.1-1~ubuntu.24.04~noble")
+docker_package_state: present
+
+# Manage service
+docker_service_enable: true
+docker_service_state: started
+
+# Add users to the docker group after install
+docker_users: []
+
+# If set (non-empty), will render to /etc/docker/daemon.json and restart Docker.
+docker_daemon_config: {}
+
+# ---------- Proxy for the *installation process* (apt/dnf + key downloads) ----------
+# Enable package-manager proxy configuration during installation.
+pkg_proxy_enable: false
+pkg_http_proxy: ""
+pkg_https_proxy: ""
+pkg_no_proxy: ""
+
+# ---------- Optional: Proxy for the Docker daemon itself ----------
+docker_daemon_proxy_enable: false
+docker_http_proxy: ""
+docker_https_proxy: ""
+docker_no_proxy: ""
+

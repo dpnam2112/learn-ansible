@@ -1,0 +1,18 @@
+docker_prereqs:
+  - ca-certificates
+  - curl
+  - dnf-plugins-core
+
+# Docker’s maintained repo (CentOS stream path works for RHEL/Alma/Rocky; Fedora has its own)
+docker_repo_url: >-
+  https://download.docker.com/linux/{{
+    'fedora' if ansible_distribution == 'Fedora' else 'centos'
+  }}/docker-ce.repo
+
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
