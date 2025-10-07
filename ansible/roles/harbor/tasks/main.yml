@@ -1,0 +1,87 @@
+---
+- name: Verify docker and compose are available
+  ansible.builtin.command: "{{ item }} --version"
+  changed_when: false
+  loop:
+    - docker
+    - docker compose
+
+- name: Create install and data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ harbor_home_dir }}"
+    - "{{ harbor_log_location }}"
+    - "{{ harbor_install_dir }}"
+    - "{{ harbor_data_dir }}"
+
+- name: Compute Harbor online installer URL
+  ansible.builtin.set_fact:
+    _harbor_installer_url: >-
+      {{ harbor_download_url_override
+         | default('https://github.com/goharbor/harbor/releases/download/v' ~ harbor_version ~
+                   '/harbor-online-installer-v' ~ harbor_version ~ '.tgz', true) }}
+
+- name: Download Harbor online installer (small bundle with prepare script)
+  ansible.builtin.get_url:
+    url: "{{ _harbor_installer_url }}"
+    dest: "{{ harbor_install_dir }}/harbor-{{ harbor_version }}.tgz"
+    mode: "0644"
+  register: _dl
+
+- name: Unpack installer into install dir
+  ansible.builtin.unarchive:
+    src: "{{ harbor_install_dir }}/harbor-{{ harbor_version }}.tgz"
+    dest: "{{ harbor_install_dir }}"
+    remote_src: true
+  register: _unpack
+
+# Official tar extracts to {{ harbor_install_dir }}/harbor (a directory)
+- name: Ensure stable 'current' symlink
+  ansible.builtin.file:
+    src: "{{ harbor_install_dir }}/harbor"
+    dest: "{{ harbor_install_dir }}/current"
+    state: link
+  register: _link
+
+- name: Template harbor.yml (HTTP-only)
+  ansible.builtin.template:
+    src: "harbor.yml.j2"
+    dest: "{{ harbor_install_dir }}/current/harbor.yml"
+    mode: "0644"
+  register: _tpl
+
+- name: Run prepare when installer or config changed
+  ansible.builtin.command:
+    cmd: "./prepare{% if harbor_enable_trivy %} --with-trivy{% endif %}"
+    chdir: "{{ harbor_install_dir }}/current"
+  when: _tpl.changed or _unpack.changed or _link.changed
+  register: _prep
+  changed_when: _prep.rc == 0
+
+- name: Bring Harbor up via Docker Compose (detached)
+  ansible.builtin.command:
+    cmd: "docker compose up -d"
+    chdir: "{{ harbor_install_dir }}/current"
+  register: _up
+  # docker compose up -d prints lines like "Container X  Started" / "Recreated"
+  changed_when: _up.rc == 0 and (
+                 'Recreated' in _up.stdout or
+                 'Created' in _up.stdout or
+                 'Started' in _up.stdout )
+
+- name: Wait for Harbor to respond
+  ansible.builtin.uri:
+    url: "http://{{ harbor_hostname }}:{{ harbor_http_port }}/api/v2.0/ping"
+    status_code: 200
+    timeout: 5
+    validate_certs: false
+  register: _ping
+  retries: 30
+  delay: 4
+  until: _ping.status == 200
+

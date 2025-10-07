@@ -1,12 +1,20 @@
 - name: Provision gitlab
   hosts: gitlab
   become: true
+  environment:
+    http_proxy:  "http://10.40.30.21:81"
+    https_proxy: "http://10.40.30.21:81"
+    no_proxy:    "127.0.0.1,localhost,10.0.0.0/8"
   roles:
     - docker
     - gitlab
     - nginx
+    - harbor
 
   tasks:
+    - name: Ensure http outbound connection isn't blocked (for reverse proxy)
+      ansible.builtin.command: "setsebool -P httpd_can_network_connect 1"
+
     - name: Ensure NGINX conf.d exists (common on both Debian/RHEL)
       ansible.builtin.file:
         path: /etc/nginx/conf.d
@@ -45,3 +53,8 @@
       ssh: 2222
 
     gitlab_external_url: "http://{{ ansible_default_ipv4.address }}:{{ gitlab_ports.http }}/gitlab"
+
+    harbor_version: "2.12.4"
+    harbor_install_dir: "/opt/harbor"
+    harbor_http_port: 8081
+    harbor_enable_trivy: false

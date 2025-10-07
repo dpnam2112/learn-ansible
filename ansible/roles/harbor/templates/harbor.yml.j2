@@ -1,0 +1,48 @@
+hostname: {{ harbor_hostname }}
+
+# --- REQUIRED by prepare() ---
+jobservice:
+  max_job_workers: {{ harbor_jobservice_max_workers }}
+  job_loggers:
+{% for l in harbor_jobservice_loggers %}
+    - {{ l }}
+{% endfor %}
+  logger_sweeper_duration: "{{ harbor_jobservice_logger_sweeper }}"
+
+notification:
+  webhook_job_max_retry: {{ harbor_notification_retry }}
+  webhook_job_http_client_timeout: "{{ harbor_notification_http_timeout }}"
+
+http:
+  port: {{ harbor_http_port }}
+
+internal_nginx:
+  enabled: true
+
+# Data root (contains registry, DB, redis, etc.)
+data_volume: {{ harbor_data_dir }}
+
+# Initial admin password; stored in DB after first start
+harbor_admin_password: {{ harbor_admin_password }}
+
+# External URL — keep it HTTP for now
+external_url: "http://{{ harbor_hostname }}:{{ harbor_http_port }}"
+
+# Stick with internal Postgres/Redis (batteries included)
+database:
+  external: false
+  password: 123
+
+redis:
+  external: false
+
+# Optional: Trivy (off by default)
+trivy:
+  enabled: {{ harbor_enable_trivy | ternary('true', 'false') }}
+
+log:
+  level: info
+  local:
+    location: "{{ harbor_log_location }}"
+    rotate_count: {{ harbor_log_rotate_count }}
+    rotate_size: "{{ harbor_log_rotate_size }}"

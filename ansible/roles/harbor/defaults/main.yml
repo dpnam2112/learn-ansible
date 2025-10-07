@@ -1,0 +1,27 @@
+harbor_home_dir: "/srv/harbor"
+
+# Basic, sensible defaults — override in your play/group_vars/host_vars
+harbor_version: "2.12.4"
+harbor_install_dir: "/opt/harbor"        # where we unpack the installer
+harbor_data_dir: "{{ harbor_home_dir }}/data"                 # Harbor's default data root
+harbor_hostname: "harbor.local.lan"      # IP or DNS; IP is fine for HTTP
+harbor_http_port: 80
+
+# Use Vault in real life
+harbor_admin_password: "ChangeMe_123!"
+
+# Optional extras (kept off for a “just work” setup)
+harbor_enable_trivy: false
+
+harbor_download_url_override: ""
+
+harbor_jobservice_max_workers: 10
+harbor_jobservice_loggers: ["FILE"]      # valid: stdout, file, database
+harbor_jobservice_logger_sweeper: 24    # hours
+
+harbor_notification_retry: 3               # webhook retry count
+harbor_notification_http_timeout: 60  # seconds
+
+harbor_log_location: "{{ harbor_home_dir }}/var/log"
+harbor_log_rotate_count: 50
+harbor_log_rotate_size: "200M"
