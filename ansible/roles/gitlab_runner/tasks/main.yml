@@ -1,0 +1,61 @@
+---
+- name: "Ensure directories"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ gitlab_runner_home }}"
+    - "{{ gitlab_runner_compose_dir }}"
+    - "{{ gitlab_runner_config_dir }}"
+    - "{{ gitlab_runner_logs_dir }}"
+    - "{{ gitlab_runner_state_dir }}"
+    - "{{ gitlab_runner_dind_graph }}"
+    - "{{ gitlab_runner_dind_certs }}"
+
+- name: "Config dir perms (tokens live here)"
+  file:
+    path: "{{ gitlab_runner_config_dir }}"
+    mode: "0700"
+
+- name: Drop base config.toml
+  template:
+    src: base-config.toml.j2
+    dest: "{{ gitlab_runner_config_dir }}/config.toml"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart runner container
+  
+
+- name: "Drop docker-compose.yml"
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ gitlab_runner_compose_dir }}/docker-compose.yml"
+    mode: "0644"
+  notify: Restart stack
+
+- name: "Start/Update runner stack"
+  community.docker.docker_compose_v2:
+    project_src: "{{ gitlab_runner_compose_dir }}"
+    project_name: "{{ gitlab_runner_project_name }}"
+    state: present
+
+- name: "Register runner (idempotent)"
+  when: not gitlab_runner_skip_register
+  include_tasks: register.yml
+
+- name: "Install systemd unit (optional)"
+  when: gitlab_runner_systemd_enable
+  template:
+    src: gitlab-runner-docker.service.j2
+    dest: "/etc/systemd/system/{{ gitlab_runner_systemd_unit }}"
+    mode: "0644"
+  notify: Daemon-reload
+
+- name: "Enable service (optional)"
+  when: gitlab_runner_systemd_enable
+  systemd:
+    name: "{{ gitlab_runner_systemd_unit }}"
+    enabled: true
+

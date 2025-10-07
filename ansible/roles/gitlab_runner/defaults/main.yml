@@ -1,0 +1,52 @@
+# --- core toggles ---
+gitlab_runner_enabled: true
+gitlab_runner_mode: "dind"         # "dind" | "socket"
+
+# --- paths / bind mounts ---
+gitlab_runner_home: "/srv/gitlab-runner"
+gitlab_runner_compose_dir: "{{ gitlab_runner_home }}/compose"
+gitlab_runner_config_dir:  "{{ gitlab_runner_home }}/config"
+gitlab_runner_logs_dir:    "{{ gitlab_runner_home }}/logs"
+gitlab_runner_state_dir:   "{{ gitlab_runner_home }}/state"
+gitlab_runner_dind_graph:  "{{ gitlab_runner_home }}/dind/graph"
+gitlab_runner_dind_certs:  "{{ gitlab_runner_home }}/dind/certs"
+
+# --- images ---
+gitlab_runner_image: "gitlab/gitlab-runner:alpine-v17.4.0"
+gitlab_dind_image:   "docker:27-dind"
+
+# --- runner registration ---
+gitlab_runner_url: "http://10.40.30.204:8080/"
+gitlab_runner_registration_token: "CHANGEME"
+gitlab_runner_name: "runner-dind"
+gitlab_runner_tags: ["docker","build"]
+gitlab_runner_run_untagged: false
+gitlab_runner_locked: false
+gitlab_runner_access_level: "not_protected"   # or "ref_protected"
+
+# --- dind flags / env ---
+gitlab_runner_dind_insecure_registries: []    # e.g., ["harbor.lan:80"]
+gitlab_runner_dind_registry_mirrors: []       # e.g., ["https://mirror.gcr.io"]
+gitlab_runner_dind_env:
+  DOCKER_TLS_CERTDIR: ""                      # expose tcp://dind:2375
+
+# --- runner env (container) ---
+gitlab_runner_env:
+  DOCKER_HOST: "tcp://dind:2375"
+  DOCKER_TLS_CERTDIR: ""
+
+# host-socket mode only: mount this if gitlab_runner_mode == "socket"
+gitlab_runner_host_docker_sock: "/var/run/docker.sock"
+
+# compose / project
+gitlab_runner_project_name: "gitlab-runner"
+gitlab_runner_network_name: "runner"
+gitlab_runner_systemd_enable: true
+gitlab_runner_systemd_unit: "gitlab-runner-docker.service"
+
+# registration control
+gitlab_runner_skip_register: true
+
+# SELinux relabel on binds (Rocky/RHEL): "z" | "Z" | "" (empty to disable)
+gitlab_runner_selinux_label: "z"
+

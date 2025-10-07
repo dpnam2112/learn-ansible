@@ -1,0 +1,16 @@
+[Unit]
+Description=Docker Compose stack for GitLab Runner
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory={{ gitlab_runner_compose_dir }}
+RemainAfterExit=yes
+ExecStart=/usr/bin/docker compose -p {{ gitlab_runner_project_name }} up -d
+ExecStop=/usr/bin/docker compose -p {{ gitlab_runner_project_name }} down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+

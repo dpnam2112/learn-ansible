@@ -1,0 +1,20 @@
+concurrent = 2
+check_interval = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = "docker-runner"
+  url = "{{ gitlab_external_url }}"
+  token = "{{ gitlab_runner_token }}"
+  executor = "docker"
+  run_untagged = true
+  locked = false
+  [runners.docker]
+    tls_verify = false
+    image = "alpine:latest"
+    privileged = true
+    disable_cache = false
+    volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
+

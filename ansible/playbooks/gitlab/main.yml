@@ -1,15 +1,39 @@
 - name: Provision gitlab
   hosts: gitlab
   become: true
-  environment:
+  environment: # environment variables during playbook execution
     http_proxy:  "http://10.40.30.21:81"
     https_proxy: "http://10.40.30.21:81"
     no_proxy:    "127.0.0.1,localhost,10.0.0.0/8"
   roles:
-    - docker
-    - gitlab
-    - nginx
-    - harbor
+#    - docker
+#    - gitlab
+#    - nginx
+#    - harbor
+    - role: gitlab_runner
+      vars:
+        gitlab_runner_home: "/srv/gitlab-runner"
+        gitlab_runner_mode: "dind"
+        gitlab_runner_url: "{{ gitlab_external_url }}"
+        gitlab_runner_name: "runner-dind"
+        gitlab_runner_tags: ["docker","build"]
+        gitlab_runner_skip_register: true
+        gitlab_runner_dind_insecure_registries:
+          - "10.40.30.204:8081"
+
+        gitlab_runner_dind_env:
+          DOCKER_TLS_CERTDIR: ""
+          HTTP_PROXY:  "{{ http_proxy }}"
+          HTTPS_PROXY: "{{ https_proxy }}"
+          NO_PROXY:    "localhost,127.0.0.1,10.0.0.0/8,harbor.lan,10.40.30.204"
+
+        gitlab_runner_env:
+          DOCKER_HOST: "tcp://dind:2375"
+          DOCKER_TLS_CERTDIR: ""
+          HTTP_PROXY:  "{{ http_proxy }}"
+          HTTPS_PROXY: "{{ http_proxy }}"
+          NO_PROXY:    "localhost,127.0.0.1,10.0.0.1/8,harbor.lan,10.40.30.204"
+    
 
   tasks:
     - name: Ensure http outbound connection isn't blocked (for reverse proxy)
@@ -37,15 +61,29 @@
         backup: true
       notify: reload nginx
 
+    - name: Render gitlab runner config
+      ansible.builtin.template:
+        src: "./gitlab_runner.toml.j2"
+        dest: "{{ gitlab_runner_config_dir }}/config.toml"
+        owner: root
+        group: root
+        mode: "0644"
+        backup: true
+      notify: Restart runner container
+
   vars:
+    http_proxy:  "http://10.40.30.21:81"
+    https_proxy: "http://10.40.30.21:81"
+    no_proxy:    "127.0.0.1,localhost,10.0.0.0/8"
+
     pkg_proxy_runtime_enable: true
-    pkg_http_proxy:  "http://10.40.30.21:81"
-    pkg_https_proxy: "http://10.40.30.21:81"
+    pkg_http_proxy:  "{{ http_proxy }}"
+    pkg_https_proxy: "{{ https_proxy }}"
     pkg_no_proxy:    "127.0.0.1,localhost,10.0.0.0/8"
 
     docker_daemon_proxy_enable: true
-    docker_http_proxy:  "http://10.40.30.21:81"
-    docker_https_proxy: "http://10.40.30.21:81"
+    docker_http_proxy:  "{{ http_proxy }}"
+    docker_https_proxy: "{{ https_proxy }}"
 
     gitlab_image_pull: true
     gitlab_ports:

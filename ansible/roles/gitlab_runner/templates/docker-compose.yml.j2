@@ -1,0 +1,47 @@
+services:
+{% if gitlab_runner_mode == 'dind' %}
+  dind:
+    image: {{ gitlab_dind_image }}
+    restart: always
+    privileged: true
+    environment:
+{% for k, v in gitlab_runner_dind_env.items() %}
+      {{ k }}: "{{ v }}"
+{% endfor %}
+    command:
+{% for reg in gitlab_runner_dind_insecure_registries %}
+      - --insecure-registry={{ reg }}
+{% endfor %}
+{% for mir in gitlab_runner_dind_registry_mirrors %}
+      - --registry-mirror={{ mir }}
+{% endfor %}
+    volumes:
+    - "{{ gitlab_runner_dind_graph }}:/var/lib/docker{% if gitlab_runner_selinux_label %}:{{ gitlab_runner_selinux_label }}{% endif %}"
+    - "{{ gitlab_runner_dind_certs }}:/etc/docker/certs.d:ro{% if gitlab_runner_selinux_label %},{{ gitlab_runner_selinux_label }}{% endif %}"
+    networks: [ "{{ gitlab_runner_network_name }}" ]
+{% endif %}
+
+  gitlab-runner:
+    image: {{ gitlab_runner_image }}
+    restart: always
+    depends_on:
+{% if gitlab_runner_mode == 'dind' %}
+      - dind
+{% endif %}
+    environment:
+{% if gitlab_runner_mode == 'dind' %}
+{% for k, v in gitlab_runner_env.items() %}
+      {{ k }}: "{{ v }}"
+{% endfor %}
+{% endif %}
+    volumes:
+      - "{{ gitlab_runner_config_dir }}:/etc/gitlab-runner{% if gitlab_runner_selinux_label %}:{{ gitlab_runner_selinux_label }}{% endif %}"
+      - "{{ gitlab_runner_logs_dir }}:/var/log/gitlab-runner{% if gitlab_runner_selinux_label %}:{{ gitlab_runner_selinux_label }}{% endif %}"
+{% if gitlab_runner_mode == 'socket' %}
+      - "{{ gitlab_runner_host_docker_sock }}:/var/run/docker.sock{% if gitlab_runner_selinux_label %}:{{ gitlab_runner_selinux_label }}{% endif %}"
+{% endif %}
+    networks: [ "{{ gitlab_runner_network_name }}" ]
+
+networks:
+  {{ gitlab_runner_network_name }}: {}
+

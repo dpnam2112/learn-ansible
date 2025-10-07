@@ -1,0 +1,31 @@
+---
+- name: Restart stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ gitlab_runner_compose_dir }}"
+    project_name: "{{ gitlab_runner_project_name }}"
+    state: present
+    recreate: smart
+
+- name: Reload runner (in-container)
+  command: >
+    docker compose -p {{ gitlab_runner_project_name }}
+    -f {{ gitlab_runner_compose_dir }}/docker-compose.yml
+    exec -T gitlab-runner gitlab-runner restart
+
+- name: Restart runner container
+  command: >
+    docker compose -p {{ gitlab_runner_project_name }}
+    -f {{ gitlab_runner_compose_dir }}/docker-compose.yml
+    restart gitlab-runner
+
+- name: Restart dind container
+  when: gitlab_runner_mode == 'dind'
+  command: >
+    docker compose -p {{ gitlab_runner_project_name }}
+    -f {{ gitlab_runner_compose_dir }}/docker-compose.yml
+    restart dind
+
+- name: Daemon-reload
+  systemd:
+    daemon_reload: true
+
