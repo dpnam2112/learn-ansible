@@ -4,6 +4,31 @@
   roles:
     - docker
     - gitlab
+    - nginx
+
+  tasks:
+    - name: Ensure NGINX conf.d exists (common on both Debian/RHEL)
+      ansible.builtin.file:
+        path: /etc/nginx/conf.d
+        state: directory
+        mode: "0755"
+
+    - name: Install NGINX (if your nginx role doesn’t do it)
+      ansible.builtin.package:
+        name: nginx
+        state: present
+      when: ansible_facts.packages is not defined or ('nginx' not in ansible_facts.packages)
+
+    - name: Deploy NGINX reverse-proxy config for GitLab (/gitlab → 127.0.0.1:8080)
+      ansible.builtin.template:
+        src: "./nginx_gitlab_http.conf.j2"
+        dest: /etc/nginx/conf.d/http/gitlab.conf
+        owner: root
+        group: root
+        mode: "0644"
+        backup: true
+      notify: reload nginx
+
   vars:
     pkg_proxy_runtime_enable: true
     pkg_http_proxy:  "http://10.40.30.21:81"
@@ -19,4 +44,4 @@
       http: 8080
       ssh: 2222
 
-    gitlab_external_url: "http://{{ ansible_default_ipv4.address }}:{{ gitlab_ports.http }}"
+    gitlab_external_url: "http://{{ ansible_default_ipv4.address }}:{{ gitlab_ports.http }}/gitlab"

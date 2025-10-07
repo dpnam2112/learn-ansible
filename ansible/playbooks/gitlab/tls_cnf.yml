@@ -1,0 +1,110 @@
+---
+- name: NGINX HTTPS reverse proxy for GitLab (/gitlab)
+  hosts: gitlab_vm
+  become: true
+  vars:
+    # ==== Core settings you’ll tweak ====
+    server_name: "gitlab.local"
+    upstream_origin: "http://127.0.0.1:8080"
+    relative_path: "/gitlab"
+    nginx_conf_dir: "/etc/nginx/conf.d/root"
+    webroot: "/var/www/html"
+
+    # ==== TLS mode ====
+    use_letsencrypt: false              # set true once you have a real domain
+    acme_email: "dpnam2112@gmail.com"       # required for LE
+    # Optional: use staging to test issue without rate limits
+    letsencrypt_staging: true           # set false for production once ready
+
+    # Self-signed output paths (safe defaults)
+    selfsigned_cert_dir: "/etc/ssl/localcerts"
+    selfsigned_key_path: "{{ selfsigned_cert_dir }}/{{ server_name | regex_replace('[^A-Za-z0-9_.-]', '_') }}.key"
+    selfsigned_crt_path: "{{ selfsigned_cert_dir }}/{{ server_name | regex_replace('[^A-Za-z0-9_.-]', '_') }}.crt"
+    selfsigned_days: 3650
+
+  pre_tasks:
+    - name: Ensure apt cache is fresh (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+  tasks:
+    - name: Install NGINX and Certbot
+      ansible.builtin.package:
+        name:
+          - nginx
+          - certbot
+          - python3-certbot-nginx
+        state: present
+
+    - name: Ensure webroot exists (for challenges and default index)
+      ansible.builtin.file:
+        path: "{{ webroot }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # --------- CERT GENERATION ---------
+
+    - name: Create dir for self-signed certs
+      ansible.builtin.file:
+        path: "{{ selfsigned_cert_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+      when: not use_letsencrypt
+
+    - name: Generate a self-signed key if missing
+      ansible.builtin.command:
+        cmd: "openssl genrsa -out {{ selfsigned_key_path }} 4096"
+        creates: "{{ selfsigned_key_path }}"
+      when: not use_letsencrypt
+
+    - name: Generate a self-signed cert if missing
+      ansible.builtin.command:
+        cmd: >
+          openssl req -x509 -new -nodes
+          -key {{ selfsigned_key_path }}
+          -sha256
+          -days {{ selfsigned_days }}
+          -subj "/CN={{ server_name }}"
+          -out {{ selfsigned_crt_path }}
+        creates: "{{ selfsigned_crt_path }}"
+      when: not use_letsencrypt
+
+    - name: Obtain/renew Let’s Encrypt certificate (webroot)
+      ansible.builtin.command:
+        cmd: >
+          certbot certonly
+          --webroot -w {{ webroot }}
+          -d {{ server_name }}
+          -m {{ acme_email }} --agree-tos --non-interactive
+          {{ '--test-cert' if letsencrypt_staging else '' }}
+      register: certbot_result
+      changed_when: "'Congratulations!' in certbot_result.stdout or 'Congratulations!' in certbot_result.stderr"
+      when: use_letsencrypt
+
+    # --------- NGINX CONFIG ---------
+
+    - name: Drop GitLab reverse-proxy config
+      ansible.builtin.template:
+        src: "./nginx_gitlab.conf.j2"
+        dest: "{{ nginx_conf_dir }}/gitlab.conf"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: reload nginx
+
+    - name: Test NGINX configuration
+      ansible.builtin.command: nginx -t
+      register: nginx_test
+      changed_when: false
+
+  handlers:
+    - name: reload nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+
