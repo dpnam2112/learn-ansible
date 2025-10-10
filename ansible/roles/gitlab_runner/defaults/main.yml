@@ -11,6 +11,8 @@ gitlab_runner_state_dir:   "{{ gitlab_runner_home }}/state"
 gitlab_runner_dind_graph:  "{{ gitlab_runner_home }}/dind/graph"
 gitlab_runner_dind_certs:  "{{ gitlab_runner_home }}/dind/certs"
 
+gitlab_config_template: "base-config.toml"
+
 # --- images ---
 gitlab_runner_image: "gitlab/gitlab-runner:alpine-v17.4.0"
 gitlab_dind_image:   "docker:27-dind"

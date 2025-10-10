@@ -5,34 +5,35 @@
     http_proxy:  "http://10.40.30.21:81"
     https_proxy: "http://10.40.30.21:81"
     no_proxy:    "127.0.0.1,localhost,10.0.0.0/8"
+
   roles:
 #    - docker
 #    - gitlab
 #    - nginx
-#    - harbor
-    - role: gitlab_runner
-      vars:
-        gitlab_runner_home: "/srv/gitlab-runner"
-        gitlab_runner_mode: "dind"
-        gitlab_runner_url: "{{ gitlab_external_url }}"
-        gitlab_runner_name: "runner-dind"
-        gitlab_runner_tags: ["docker","build"]
-        gitlab_runner_skip_register: true
-        gitlab_runner_dind_insecure_registries:
-          - "10.40.30.204:8081"
-
-        gitlab_runner_dind_env:
-          DOCKER_TLS_CERTDIR: ""
-          HTTP_PROXY:  "{{ http_proxy }}"
-          HTTPS_PROXY: "{{ https_proxy }}"
-          NO_PROXY:    "localhost,127.0.0.1,10.0.0.0/8,harbor.lan,10.40.30.204"
-
-        gitlab_runner_env:
-          DOCKER_HOST: "tcp://dind:2375"
-          DOCKER_TLS_CERTDIR: ""
-          HTTP_PROXY:  "{{ http_proxy }}"
-          HTTPS_PROXY: "{{ http_proxy }}"
-          NO_PROXY:    "localhost,127.0.0.1,10.0.0.1/8,harbor.lan,10.40.30.204"
+     - harbor
+#    - role: gitlab_runner
+#      vars:
+#        gitlab_runner_home: "/srv/gitlab-runner"
+#        gitlab_runner_mode: "dind"
+#        gitlab_runner_url: "{{ gitlab_external_url }}"
+#        gitlab_runner_name: "runner-dind"
+#        gitlab_runner_tags: ["docker","build"]
+#        gitlab_runner_skip_register: true
+#        gitlab_runner_dind_insecure_registries:
+#          - "10.40.30.204:8081"
+#
+#        gitlab_runner_dind_env:
+#          DOCKER_TLS_CERTDIR: ""
+#          HTTP_PROXY:  "{{ http_proxy }}"
+#          HTTPS_PROXY: "{{ https_proxy }}"
+#          NO_PROXY:    "localhost,127.0.0.1,10.0.0.0/8,harbor.lan,10.40.30.204"
+#
+#        gitlab_runner_env:
+#          DOCKER_HOST: "tcp://dind:2375"
+#          DOCKER_TLS_CERTDIR: ""
+#          HTTP_PROXY:  "{{ http_proxy }}"
+#          HTTPS_PROXY: "{{ http_proxy }}"
+#          NO_PROXY:    "localhost,127.0.0.1,10.0.0.1/8,harbor.lan,10.40.30.204"
     
 
   tasks:

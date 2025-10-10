@@ -20,14 +20,13 @@
 
 - name: Drop base config.toml
   template:
-    src: base-config.toml.j2
+    src: "{{ gitlab_config_template }}"
     dest: "{{ gitlab_runner_config_dir }}/config.toml"
     owner: root
     group: root
     mode: "0600"
   notify: Restart runner container
   
-
 - name: "Drop docker-compose.yml"
   template:
     src: docker-compose.yml.j2
@@ -40,22 +39,3 @@
     project_src: "{{ gitlab_runner_compose_dir }}"
     project_name: "{{ gitlab_runner_project_name }}"
     state: present
-
-- name: "Register runner (idempotent)"
-  when: not gitlab_runner_skip_register
-  include_tasks: register.yml
-
-- name: "Install systemd unit (optional)"
-  when: gitlab_runner_systemd_enable
-  template:
-    src: gitlab-runner-docker.service.j2
-    dest: "/etc/systemd/system/{{ gitlab_runner_systemd_unit }}"
-    mode: "0644"
-  notify: Daemon-reload
-
-- name: "Enable service (optional)"
-  when: gitlab_runner_systemd_enable
-  systemd:
-    name: "{{ gitlab_runner_systemd_unit }}"
-    enabled: true
-

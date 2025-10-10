@@ -4,7 +4,7 @@ harbor_home_dir: "/srv/harbor"
 harbor_version: "2.12.4"
 harbor_install_dir: "/opt/harbor"        # where we unpack the installer
 harbor_data_dir: "{{ harbor_home_dir }}/data"                 # Harbor's default data root
-harbor_hostname: "harbor.local.lan"      # IP or DNS; IP is fine for HTTP
+harbor_hostname: "{{ ansible_default_ipv4.address }}"      # IP or DNS; IP is fine for HTTP
 harbor_http_port: 80
 
 # Use Vault in real life
