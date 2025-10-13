@@ -1,0 +1,25 @@
+---
+- name: Assert package list provided
+  assert:
+    that:
+      - kube_packages | length > 0
+    fail_msg: "kube_packages must be a non-empty list (e.g., ['kubelet','kubeadm'])."
+
+# Debian/Ubuntu path
+- name: Include Debian/Ubuntu repo setup
+  include_tasks: setup_repo_debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Install Kubernetes packages (Debian/Ubuntu)
+  include_tasks: install_debian.yml
+  when: ansible_os_family == "Debian"
+
+# RHEL path
+- name: Include RHEL repo setup
+  include_tasks: setup_repo_rhel.yml
+  when: ansible_os_family == "RedHat"
+
+- name: Install Kubernetes packages (RHEL family)
+  include_tasks: install_rhel.yml
+  when: ansible_os_family == "RedHat"
+

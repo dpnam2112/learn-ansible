@@ -1,0 +1,22 @@
+---
+- name: Install apt prereqs
+  apt:
+    name: "{{ kube_install_prereqs }}"
+    state: present
+    update_cache: yes
+
+- name: Add Kubernetes apt key (pkgs.k8s.io)
+  shell: |
+    set -euo pipefail
+    curl -fsSL https://pkgs.k8s.io/core:/{{ kubernetes_apt_channel }}/deb/Release.key \
+      | gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Add Kubernetes apt repository
+  copy:
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    content: |
+      deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/kubernetes:/{{ kubernetes_apt_channel }}/deb/ /
+

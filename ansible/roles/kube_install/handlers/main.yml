@@ -1,0 +1,5 @@
+---
+- name: Refresh RHEL metadata
+  command: dnf makecache
+  when: ansible_os_family == "RedHat"
+

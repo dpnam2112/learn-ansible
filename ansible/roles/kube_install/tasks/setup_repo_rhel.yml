@@ -1,0 +1,33 @@
+---
+# roles/kube_install/tasks/setup_repo_rhel.yml
+
+- name: Compute RPM stream suffix
+  set_fact:
+    _rpm_stream_part: "{{ (kubernetes_rpm_stream | default('') | length > 0) | ternary(':/'+ kubernetes_rpm_stream, '') }}"
+
+- name: Compute RPM repo baseurl and gpgkey
+  set_fact:
+    _rpm_baseurl: "https://pkgs.k8s.io/core:/{{ kubernetes_rpm_channel }}{{ _rpm_stream_part }}/rpm/"
+
+- name: Compute RPM gpgkey
+  set_fact:
+    _rpm_gpgkey: "{{ _rpm_baseurl }}repodata/repomd.xml.key"
+
+- name: Create Kubernetes yum repo file
+  copy:
+    dest: /etc/yum.repos.d/kubernetes.repo
+    content: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl={{ _rpm_baseurl }}
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey={{ _rpm_gpgkey }}
+  notify: Refresh RHEL metadata
+
+- name: Install RHEL prerequisites
+  package:
+    name: "{{ kube_rhel_prereqs }}"
+    state: present
+

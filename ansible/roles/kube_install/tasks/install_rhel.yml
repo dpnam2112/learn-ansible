@@ -1,0 +1,31 @@
+---
+# Version semantics on RHEL:
+# If kube_version is provided, we best-effort match "name-version*"
+# Example: kube_version="1.30.4" -> dnf installs "kubelet-1.30.4*"
+# For strict NEVRA pinning, pass full NVR if needed (advanced).
+
+- name: Compute package targets for RHEL (with or without version)
+  set_fact:
+    _kube_pkg_targets: >-
+      {{ (kube_packages | map('regex_replace', '$', '-' + kube_version + '*') | list)
+         if (kube_version | length > 0)
+         else kube_packages }}
+
+- name: Install Kubernetes packages (dnf/yum)
+  dnf:
+    name: "{{ _kube_pkg_targets }}"
+    state: "{{ kube_state }}"
+    enablerepo: kubernetes
+    allowerasing: true
+
+- name: Install versionlock plugin (if holding)
+  dnf:
+    name: python3-dnf-plugin-versionlock
+    state: present
+  when: kube_hold | bool
+
+- name: Add version locks (simple pattern lock)
+  shell: "dnf -y versionlock add {{ item }}*"
+  loop: "{{ kube_packages }}"
+  when: kube_hold | bool
+  changed_when: false

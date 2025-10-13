@@ -1,0 +1,16 @@
+- name: Setup kubernetes
+  hosts: kube_controlplane
+  become: true
+
+  environment: # environment variables during playbook execution
+    http_proxy:  "http://10.40.30.21:81"
+    https_proxy: "http://10.40.30.21:81"
+    no_proxy:    "127.0.0.1,localhost,10.0.0.0/8"
+
+  roles:
+    - role: kube_install
+      vars:
+        kube_packages: ['kubelet','kubeadm', "kubectl"]
+        kubernetes_rpm_channel: "stable"
+        kubernetes_rpm_stream: "v1.34"
+        kube_hold: true

@@ -1,0 +1,20 @@
+---
+- name: Compute package targets (with or without version)
+  set_fact:
+    _kube_pkg_targets: >-
+      {{ (kube_packages | map('regex_replace', '$', '=' + kube_version) | list)
+         if (kube_version | length > 0)
+         else kube_packages }}
+
+- name: Install Kubernetes packages
+  apt:
+    name: "{{ _kube_pkg_targets }}"
+    state: "{{ kube_state }}"
+    update_cache: yes
+
+- name: Hold packages (apt-mark hold)
+  shell: "apt-mark hold {{ item }}"
+  loop: "{{ kube_packages }}"
+  when: kube_hold | bool
+  changed_when: false
+
