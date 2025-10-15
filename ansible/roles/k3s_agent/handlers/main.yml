@@ -1,0 +1,12 @@
+- name: systemd daemon-reload
+  listen: systemd daemon-reload
+  become: true
+  systemd:
+    daemon_reload: true
+
+- name: Restart k3s-agent
+  listen: Restart k3s-agent
+  become: true
+  service:
+    name: k3s-agent
+    state: restarted

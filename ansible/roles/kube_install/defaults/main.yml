@@ -20,17 +20,3 @@ kubernetes_apt_channel: "stable"         # Debian/Ubuntu
 kubernetes_rpm_channel: "stable"         # RHEL family (stable, testing, etc.)
 kubernetes_rpm_stream: ""                # Optional stream like "v1.30" -> stable:/v1.30
 
-# Internal prereqs
-kube_install_prereqs:
-  - curl
-  - gnupg
-  - ca-certificates
-  - apt-transport-https
-  - software-properties-common
-
-# RHEL prereqs
-kube_rhel_prereqs:
-  - curl
-  - dnf-plugins-core        # repo mgmt + versionlock plugin base
-  - ca-certificates
-

@@ -1,0 +1,25 @@
+server: "{{ k3s_server_url }}"
+token: "{{ k3s_token }}"
+
+# Node identity
+{% if inventory_hostname is defined %}node-name: "{{ inventory_hostname }}"{% endif %}
+{% if hostvars[inventory_hostname].node_ip is defined %}node-ip: "{{ hostvars[inventory_hostname].node_ip }}"{% endif %}
+
+# Labels / taints
+{% if (k3s_node_labels | default([])) | length > 0 %}
+node-label:
+{% for lbl in k3s_node_labels %}
+  - "{{ lbl }}"
+{% endfor %}
+{% endif %}
+
+{% if (k3s_node_taints | default([])) | length > 0 %}
+node-taint:
+{% for t in k3s_node_taints %}
+  - "{{ t }}"
+{% endfor %}
+{% endif %}
+
+# You can place extra args if needed:
+kubelet-arg:
+  - "max-pods=110"

@@ -1,0 +1,24 @@
+{% if k3s_registries.mirrors is defined %}
+mirrors:
+{% for name, cfg in k3s_registries.mirrors.items() %}
+  "{{ name }}":
+    endpoint: {{ cfg.endpoint | to_json }}
+{% endfor %}
+{% endif %}
+
+{% if k3s_registries.configs is defined %}
+configs:
+{% for name, cfg in k3s_registries.configs.items() %}
+  "{{ name }}":
+{% if cfg.auth is defined %}
+    auth:
+      username: "{{ cfg.auth.username }}"
+      password: "{{ cfg.auth.password }}"
+{% endif %}
+{% if cfg.tls is defined %}
+    tls:
+      insecure_skip_verify: {{ cfg.tls.insecure_skip_verify | default(false) | to_json }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
