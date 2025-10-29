@@ -1,0 +1,10 @@
+- name: Setup k0s control plane
+  hosts: k0s-ctrl
+  become: true
+  gather_facts: true
+
+  vars:
+    k0s_enable_worker: true
+
+  roles:
+    - role: k0s-ctrl

@@ -1,0 +1,7 @@
+- name: Setup k0s agents
+  hosts: k0s-nodes
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: k0s-agent
