@@ -1,0 +1,3 @@
+---
+k0s_version: "v0.11.0"
+k0s_token: ""  # pass from controller hostvars or inventory

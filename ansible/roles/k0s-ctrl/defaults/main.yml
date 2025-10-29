@@ -1,0 +1,4 @@
+---
+k0s_version: "v0.11.0"
+k0s_enable_worker: false     # set true for single-node (controller+worker), uses --enable-worker
+k0s_artifacts_dir: "/var/lib/k0s"

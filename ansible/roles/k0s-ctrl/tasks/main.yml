@@ -1,0 +1,36 @@
+---
+- name: Ensure curl present
+  become: true
+  ansible.builtin.package:
+    name: curl
+    state: present
+
+- name: Detect installed k0s version (if any)
+  ansible.builtin.command: k0s version --short
+  register: k0s_ver
+  failed_when: false
+  changed_when: false
+
+- name: Install k0s
+  become: true
+  ansible.builtin.shell: |
+    curl -sSLf https://get.k0s.sh | sh
+
+  environment:
+    K0S_VERSION: "{{ k0s_version }}"
+  when: k0s_ver.rc != 0 or (k0s_ver.stdout | trim) != k0s_version
+
+- name: Install controller service
+  become: true
+  ansible.builtin.command: >
+    k0s install controller {{ '--enable-worker' if k0s_enable_worker else '' }}
+  args:
+    creates: /etc/systemd/system/k0scontroller.service
+
+- name: Enable and start controller
+  become: true
+  ansible.builtin.systemd:
+    name: k0scontroller
+    daemon_reload: true
+    enabled: true
+    state: started
