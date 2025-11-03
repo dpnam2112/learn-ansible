@@ -1,0 +1,111 @@
+---
+# Provision a SMALL single-primary Percona XtraDB Cluster (PXC)
+# Assumes inventory groups:
+#   [mysql-cluster:pri]  -> the initial write primary (1 host)
+#   [mysql-cluster:sec]  -> 1..N secondaries (read-only)
+#
+# Tip: put pxc_sst_password in Ansible Vault.
+
+- name: Prepare PXC packages & base config on all nodes
+  hosts: mysql-cluster
+  become: true
+  vars:
+    percona_mysql_cluster: true                  # make the role install PXC
+    pxc_cluster_name: "pxc-demo"
+    pxc_gcomm: "gcomm://{{ groups['mysql-cluster'] | map('extract', hostvars, 'ansible_host') | join(',') }}"
+    pxc_sst_user: "{{ vault_pxc_sst_user }}"
+    pxc_sst_password: "{{ vault_pxc_sst_password }}"
+    pxc_secondary_readonly: true
+    # Galera provider path for Debian/Ubuntu
+    pxc_wsrep_provider: "/usr/lib/galera4/libgalera_smm.so"
+    percona_mysql_conf_d: /etc/mysql/conf.d
+    percona_mysql_user: mysql
+    percona_mysql_group: mysql
+    percona_mysql_service_name: mysql
+
+
+  pre_tasks:
+    - name: Ensure user exists
+      ansible.builtin.user:
+        name: "{{ percona_mysql_user }}"
+        state: present
+
+    - name: Ensure group exists
+      ansible.builtin.group:
+        name: "{{ percona_mysql_group }}"
+        state: present
+
+    - name: Ensure conf.d exists
+      file:
+        path: "{{ percona_mysql_conf_d }}"
+        state: directory
+        owner: "{{ percona_mysql_user }}"
+        group: "{{ percona_mysql_group }}"
+        mode: "0755"
+
+    - name: Ensure python3-pymysql exists
+      ansible.builtin.apt:
+        name: python3-pymysql
+        state: present
+
+  roles:
+    - role: percona_mysql
+      vars:
+        percona_mysql_service_state: 'stopped'
+
+    - role: node_exporter
+
+  tasks:
+    - name: Render cluster configuration drop-in
+      # This is small and local to the playbook; see template content below.
+      ansible.builtin.template:
+        src: "cluster.cnf.j2"
+        dest: "{{ percona_mysql_conf_d }}/cluster.cnf"
+        owner: "{{ percona_mysql_user }}"
+        group: "{{ percona_mysql_group }}"
+        mode: "0644"
+
+    - name: Stop service on all nodes before orchestrated start
+      ansible.builtin.service:
+        name: "{{ percona_mysql_service_name }}"
+        state: stopped
+      failed_when: false
+
+#  handlers:
+#    - name: restart mysql
+#      ansible.builtin.service:
+#        name: "{{ percona_mysql_service_name | default('mysql') }}"
+#        state: restarted
+
+- name: Bootstrap the primary node
+  hosts: mysql-cluster-pri
+  become: true
+  tasks:
+    - name: Bootstrap first node via systemd template unit
+      ansible.builtin.command: "systemctl start mysql@bootstrap.service"
+      register: bootstrap_cmd
+      changed_when: "'started' in bootstrap_cmd.stdout or bootstrap_cmd.rc == 0"
+      # If it fails, check logs: journalctl -xeu mysql@bootstrap.service
+      # Using mysql@bootstrap is the recommended PXC way to start the very first node.
+      # (Equivalent to starting with --wsrep-new-cluster)
+      # Docs: see citations in the chat.
+
+    - name: restart mysql
+      ansible.builtin.service:
+        name: "{{ percona_mysql_service_name | default('mysql') }}"
+        state: restarted
+
+- name: Start secondary nodes (they will join the cluster)
+  hosts: mysql-cluster-sec
+  become: true
+  tasks:
+    - name: Start mysql on secondaries (join via wsrep_cluster_address)
+      ansible.builtin.service:
+        name: "{{ percona_mysql_service_name | default('mysql') }}"
+        state: started
+        enabled: true
+
+    - name: restart mysql
+      ansible.builtin.service:
+        name: "{{ percona_mysql_service_name | default('mysql') }}"
+        state: restarted

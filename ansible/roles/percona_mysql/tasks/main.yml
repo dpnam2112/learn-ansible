@@ -33,12 +33,6 @@
     group: "{{ percona_mysql_group }}"
     mode: "0750"
 
-- name: Ensure MySQL service enabled/started
-  ansible.builtin.service:
-    name: "{{ percona_mysql_service_name }}"
-    enabled: "{{ percona_mysql_service_enabled }}"
-    state: "{{ percona_mysql_service_state }}"
-
 - name: render mysql's main config
   ansible.builtin.template:
     src: my.cnf.j2
@@ -47,3 +41,9 @@
     group: "{{ percona_mysql_group }}"
     mode: "0644"
   notify: restart mysql
+
+- name: Ensure MySQL service enabled/started
+  ansible.builtin.service:
+    name: "{{ percona_mysql_service_name }}"
+    enabled: "{{ percona_mysql_service_enabled }}"
+    state: "{{ percona_mysql_service_state }}"

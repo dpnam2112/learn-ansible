@@ -1,0 +1,21 @@
+# Managed by Ansible (percona_pxc)
+[mysqld]
+bind-address = {{ percona_mysql_bind_address }}
+port = {{ percona_mysql_port }}
+datadir = {{ percona_mysql_datadir }}
+!includedir /etc/mysql/conf.d
+
+# --- PXC/Galera ---
+wsrep_on = ON
+wsrep_provider = /usr/lib/galera3/libgalera_smm.so
+wsrep_cluster_name = {{ pxc_cluster_name }}
+wsrep_cluster_address = gcomm://{{ pxc_nodes | join(',') }}
+wsrep_node_address = {{ pxc_node_address }}
+
+wsrep_sst_method = xtrabackup-v2
+pxc_strict_mode = ENFORCING
+
+# Required for Galera
+binlog_format = ROW
+default_storage_engine = InnoDB
+innodb_autoinc_lock_mode = 2

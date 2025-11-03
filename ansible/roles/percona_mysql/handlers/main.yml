@@ -4,8 +4,10 @@
     argv:
       - "{{ percona_mysql_server_bin }}"
       - "--defaults-file={{ percona_mysql_main_conf }}"
+      - "--wsrep_on=OFF"
       - "--validate-config"
   register: mysql_validate_restart
+  when: percona_mysql_service_state == 'started'
   changed_when: false
   failed_when: mysql_validate_restart.rc != 0
 
@@ -14,3 +16,4 @@
   ansible.builtin.service:
     name: "{{ percona_mysql_service_name }}"
     state: restarted
+  when: percona_mysql_service_state == 'started'

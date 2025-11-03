@@ -1,0 +1,60 @@
+---
+- name: Fail if not Debian/Ubuntu (keep role tiny)
+  assert:
+    that: ansible_facts['os_family'] == 'Debian'
+    fail_msg: "percona_pxc: This tiny role currently supports Debian/Ubuntu only."
+
+- name: Assert required cluster vars are set
+  assert:
+    that:
+      - pxc_cluster_name is defined
+      - pxc_nodes is defined
+      - pxc_nodes | length >= 1
+      - pxc_node_address is defined
+      - pxc_sst_user is defined
+      - pxc_sst_password is defined
+      - percona_release_version is defined
+      - percona_pxc_version is defined
+      - percona_xtrabackup_version is defined
+    fail_msg: >-
+      percona_pxc: Missing required vars. Define pxc_cluster_name, pxc_nodes,
+      pxc_node_address, pxc_sst_user, pxc_sst_password and version pins in group/host vars.
+
+# 1) Prereqs + repo helper (pinned)
+- name: Ensure prerequisites
+  apt:
+    name: [ca-certificates, curl, gnupg, lsb-release]
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install specific percona-release (pinned)
+  apt:
+    deb: "https://repo.percona.com/apt/percona-release_{{ percona_release_version }}.generic_all.deb"
+  become: true
+
+- name: Enable PXC 8.0 repo
+  command: percona-release setup pxc-80
+  changed_when: true
+  become: true
+
+# 2) Install PXC + XtraBackup (pinned)
+- name: Install pinned PXC + XtraBackup
+  apt:
+    name:
+      - "percona-xtradb-cluster-80={{ percona_pxc_version }}"
+      - "percona-xtrabackup-80={{ percona_xtrabackup_version }}"
+    state: present
+    update_cache: true
+  become: true
+
+# 3) Config
+- name: Render my.cnf (minimal PXC)
+  template:
+    src: my.cnf.j2
+    dest: "{{ percona_mysql_main_conf }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart mysql
+  become: true

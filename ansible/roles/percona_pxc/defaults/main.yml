@@ -1,0 +1,15 @@
+# --- Minimal MySQL bits (keep small)
+percona_mysql_bind_address: "0.0.0.0"
+percona_mysql_port: 3306
+percona_mysql_datadir: /var/lib/mysql
+percona_mysql_main_conf: /etc/mysql/my.cnf
+percona_mysql_service_name: mysql
+
+# --- Cluster bootstrap (only true on first node)
+pxc_bootstrap: false
+
+# --- Version pins (override in group_vars/db for your distro)
+# Check 'apt-cache madison percona-xtradb-cluster-80' for exact string
+percona_release_version: "1.0-27"
+percona_pxc_version: "8.0.36-27.1-1.bullseye"
+percona_xtrabackup_version: "8.0.36-28.1-1.bullseye"

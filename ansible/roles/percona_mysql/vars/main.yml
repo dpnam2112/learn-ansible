@@ -13,3 +13,9 @@ percona_mysql_service_name_map:
 
 percona_mysql_default_bin_name: "{{ percona_mysql_service_name_map.get(ansible_os_family, 'mysql') }}"
 
+
+# derive repo/setup tokens and package name from the switch
+percona_mysql_repo_setup_token_debian: "{{ 'pxc80'  if percona_mysql_cluster else 'ps80' }}"
+percona_mysql_repo_channel: "{{ 'pxc-80' if percona_mysql_cluster else 'ps-80' }}"
+percona_mysql_package_server: "{{ 'percona-xtradb-cluster-server' if percona_mysql_cluster else 'percona-server-server' }}"
+percona_mysql_socket: "/var/lib/mysql/mysql.sock"

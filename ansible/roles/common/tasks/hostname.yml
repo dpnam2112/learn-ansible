@@ -6,5 +6,5 @@
 
 - name: Enforce hostname
   ansible.builtin.hostname:
-    name: "{{ hostname }}"
+    name: "{{ inventory_hostname }}"
     use: systemd
