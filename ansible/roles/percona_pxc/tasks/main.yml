@@ -38,7 +38,6 @@
   changed_when: true
   become: true
 
-# 2) Install PXC + XtraBackup (pinned)
 - name: Install pinned PXC + XtraBackup
   apt:
     name:
@@ -48,7 +47,6 @@
     update_cache: true
   become: true
 
-# 3) Config
 - name: Render my.cnf (minimal PXC)
   template:
     src: my.cnf.j2
@@ -56,5 +54,12 @@
     owner: root
     group: root
     mode: "0644"
-  notify: restart mysql
   become: true
+
+- name: Render MySQL systemd unit
+  ansible.builtin.template:
+    src: mysql.service.j2
+    dest: "/etc/systemd/system/{{ percona_mysql_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"

@@ -1,0 +1,28 @@
+# Managed by Ansible (percona_mysql)
+[Unit]
+Description=Percona MySQL Server
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=10
+
+[Service]
+User=mysql
+Group=mysql
+
+# systemd-managed runtime dir under /run/mysqld
+RuntimeDirectory=mysqld
+RuntimeDirectoryMode=0755
+PIDFile=/run/mysqld/mysqld.pid
+
+# Main server process
+ExecStart=/usr/sbin/mysqld \
+  --defaults-file={{ percona_mysql_main_conf }} \
+  --datadir={{ percona_mysql_datadir }} \
+  --port={{ percona_mysql_port }} \
+  --bind-address={{ percona_mysql_bind_address }}
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

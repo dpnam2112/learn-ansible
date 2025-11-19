@@ -8,7 +8,7 @@ StartLimitBurst=10
 [Service]
 RuntimeDirectory=mysqld
 RuntimeDirectoryMode=0755
-ExecStart={{ percona_mysql_server_bin }} --defaults-file={{ percona_mysql_main_conf }}
+ExecStart={{ percona_mysql_server_bin }} --defaults-file={{ percona_mysql_main_conf }} --wsrep-new-cluster
 Restart=on-failure
 User={{ percona_mysql_user }}
 Group={{ percona_mysql_group }}
